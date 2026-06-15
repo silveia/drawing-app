@@ -4,7 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>draw</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        #colorPicker {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: inline-block; /* 📐 Ensures the element respects width and height bounds */
+            overflow: hidden;     /* 🧼 Prevents the square background from bleeding past the round edge */
+            border-radius: 50%;    /* Perfect circle clip */
+        }
+        
+        /* Force the internal browser color swatch to look like a circle */
+        #colorPicker::-webkit-color-swatch {
+            border-radius: 50%;
+            border: 2px solid white; /* Slightly thicker line looks cleaner in toolbars */
+            box-sizing: border-box;
+        }
+        
+        #colorPicker::-moz-color-swatch {
+            border-radius: 50%;
+            border: 2px solid white;
+            box-sizing: border-box;
+        }
         #canvas-container {
             position: relative;
             margin-top: 20px;
@@ -33,7 +63,7 @@
             flex-direction: column;
             align-items: center;
             background-color: #E7E3E5;
-            font-family: Arial, sans-serif;
+            font-family: 'Pixelify Sans', sans-serif;
         }
         #toolbar {
             background-color: #49393F;
@@ -67,7 +97,7 @@
             height: 100%;
             display: block;
         }
-        button, .file-upload-btn {
+        button, .file-upload-btn, select, option {
             padding: 5px 15px;
             cursor: pointer;
             background-color: #775F6C;
@@ -76,6 +106,7 @@
             border-radius: 4px;
             font-weight: bold;
             font-size: 14px;
+            font-family: inherit;
         }
         button:hover, .file-upload-btn:hover {
             background-color: #624D5A;
@@ -89,8 +120,11 @@
         #imageLoader {
             display: none;
         }
-        #brushSize {
+        #brushSize{
             accent-color: #775F6C;
+        }
+        select {
+            padding-right: 25px; /* Gives the dropdown arrow room to breathe */
         }
     </style>
 </head>
@@ -98,15 +132,15 @@
 
     <div id="toolbar">
         <div class="toolbar-group">
-            <label for="brushType">tool :> </label>
+            <label for="brushType">tool</label>
             <select id="brushType">
                 <option value="round">round brush </option>
                 <option value="square">square bruh</option>
                 <option value="eraser">eraser</option>
             </select>
     
-            <label>color :p <input type="color" id="colorPicker" value="#000000"></label>
-            <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
+            <label>color    <input type="color" id="colorPicker" value="#000000"></label>
+            <label>size   <input type="range" id="brushSize" min="1" max="50" value="5"></label>
         </div>
     
         <div class="toolbar-group">
