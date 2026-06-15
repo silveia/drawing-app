@@ -45,9 +45,6 @@
         button:hover {
             background-color: #5a5a5a;
         }
-        button.active {
-            background-color: #2ed573; /* Green to show which tool is active */
-        }
         #clearBtn {
             background-color: #ff4757;
         }
@@ -59,9 +56,13 @@
 <body>
 
     <div id="toolbar">
-        <button id="brushBtn" class="active">Brush</button>
-        <button id="eraserBtn">Eraser</button>
-        <button id="pixelBtn">Pixel Art</button>
+        <label for="brushType">Tool: </label>
+        <select id="brushType">
+            <option value="round">Pen (Round)</option>
+            <option value="square">Pen (Square)</option>
+            <option value="eraser">Eraser</option>
+        </select>
+
         <label>Color: <input type="color" id="colorPicker" value="#000000"></label>
         <label>Size: <input type="range" id="brushSize" min="1" max="50" value="5"></label>
         <button id="clearBtn">Clear Canvas</button>
@@ -75,32 +76,15 @@
         const colorPicker = document.getElementById('colorPicker');
         const brushSize = document.getElementById('brushSize');
         const clearBtn = document.getElementById('clearBtn');
-        const brushBtn = document.getElementById('brushBtn');
-        const eraserBtn = document.getElementById('eraserBtn');
-        const pixelBtn = document.getElementById('pixelBtn');
+        const brushType = document.getElementById('brushType');
 
         let isDrawing = false;
-        let currentTool = 'brush'; // Keeps track of 'brush' or 'eraser'
+        let currentTool = 'round';
 
         // Tool Selection Logic
-        brushBtn.addEventListener('click', () => {
-            currentTool = 'brush';
-            brushBtn.classList.add('active');
-            eraserBtn.classList.remove('active');
-            pixelBtn.classList.remove('active');
-        });
-
-        eraserBtn.addEventListener('click', () => {
-            currentTool = 'eraser';
-            eraserBtn.classList.add('active');
-            brushBtn.classList.remove('active');
-            pixelBtn.classList.remove('active');
-        });
-        pixelBtn.addEventListener('click', () => {
-            currentTool = 'pixel';
-            pixelBtn.classList.add('active');
-            brushBtn.classList.remove('active');
-            eraserBtn.classList.remove('active');
+        // Dropdown Selection Logic
+        brushType.addEventListener('change', () => {
+            currentTool = brushType.value; // Automatically sets currentTool to 'round', 'square', or 'eraser'
         });
 
         // Drawing Logic
@@ -115,19 +99,21 @@
 
         function draw(e) {
             if (!isDrawing) return;
-
-            // IF tool is brush, use color picker. IF eraser, use white.
-            if (currentTool === 'brush' || currentTool === 'pixel') {
+        
+            // IF tool is round or square, use color picker. IF eraser, use white.
+            if (currentTool === 'round' || currentTool === 'square') {
                 ctx.strokeStyle = colorPicker.value;
             } else {
                 ctx.strokeStyle = '#ffffff'; // White matches the canvas background
             }
-
+        
             ctx.lineWidth = brushSize.value;
-            if (currentTool === 'pixel') {
+            
+            // Set line styles based on the dropdown selection
+            if (currentTool === 'square') {
                 ctx.lineCap = 'square';
                 ctx.lineJoin = 'miter';
-                ctx.imageSmoothingEnabled = false; // Tells the canvas not to blend pixels
+                ctx.imageSmoothingEnabled = false; 
             } else {
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
