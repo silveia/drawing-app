@@ -32,6 +32,10 @@
             margin-top: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             cursor: crosshair;
+
+            width: 90vw; /* screen takes up 90% of screen width */
+            height: 70vh; /* screen takes up 70% of screen height */
+            max-width: 1200px; /* prevents it from becoming too big if big screen size */
         }
         button {
             padding: 5px 15px;
@@ -80,7 +84,27 @@
 
         let isDrawing = false;
         let currentTool = 'round';
-
+        // Function to match the internal resolution to the display size
+        function resizeCanvas() {
+            // Save what you've drawn so it doesn't instantly wipe out on resize
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCtx.drawImage(canvas, 0, 0);
+        
+            // Set the internal pixel dimensions to match the CSS display dimensions
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        
+            // Restore your drawings back onto the resized canvas
+            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+        }
+        
+        resizeCanvas();
+        
+        // Automatically adjust the canvas if you resize the browser window
+        window.addEventListener('resize', resizeCanvas);
         // Tool Selection Logic
         // Dropdown Selection Logic
         brushType.addEventListener('change', () => {
