@@ -87,12 +87,14 @@
             currentTool = 'brush';
             brushBtn.classList.add('active');
             eraserBtn.classList.remove('active');
+            pixelBtn.classList.remove('active');
         });
 
         eraserBtn.addEventListener('click', () => {
             currentTool = 'eraser';
             eraserBtn.classList.add('active');
             brushBtn.classList.remove('active');
+            pixelBtn.classList.remove('active');
         });
         pixelBtn.addEventListener('click', () => {
             currentTool = 'pixel';
@@ -115,7 +117,7 @@
             if (!isDrawing) return;
 
             // IF tool is brush, use color picker. IF eraser, use white.
-            if (currentTool === 'brush') {
+            if (currentTool === 'brush' || currentTool === 'pixel') {
                 ctx.strokeStyle = colorPicker.value;
             } else {
                 ctx.strokeStyle = '#ffffff'; // White matches the canvas background
@@ -131,8 +133,6 @@
                 ctx.lineJoin = 'round';
                 ctx.imageSmoothingEnabled = true;
             }
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
 
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
