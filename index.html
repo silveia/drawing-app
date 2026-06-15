@@ -106,8 +106,6 @@
         }
         
         resizeCanvas();
-        
-        // Automatically adjust the canvas if you resize the browser window
         window.addEventListener('resize', resizeCanvas);
 
         // Dropdown Selection Logic
@@ -115,20 +113,29 @@
             currentTool = brushType.value;
         });
 
+        // Reset tracking variables completely on pointer release
+        const resetTracking = () => {
+            isDrawing = false;
+            canvas.lastX = null;
+            canvas.lastY = null;
+            canvas.lastMidX = null;
+            canvas.lastMidY = null;
+            ctx.beginPath();
+        };
+
         // Drawing Logic
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
             draw(e);
         });
 
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseout', () => isDrawing = false);
+        // Global listeners (defined safely AFTER resetTracking)
+        window.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', resetTracking);
 
         function draw(e) {
-            if (!isDrawing) return;
-        
-            // IF tool is round or square, use color picker. IF eraser, use white.
+            if (!isDrawing || !e.clientX || !e.clientY) return;        
+            
             if (currentTool === 'round' || currentTool === 'square') {
                 ctx.strokeStyle = colorPicker.value;
             } else {
@@ -137,7 +144,6 @@
         
             ctx.lineWidth = brushSize.value;
             
-            // Set line styles based on the dropdown selection
             if (currentTool === 'square') {
                 ctx.lineCap = 'square';
                 ctx.lineJoin = 'miter';
@@ -159,36 +165,19 @@
                 canvas.lastMidY = y;
             }
         
-            // Calculate a midpoint between the last spot and the current spot
             const midX = (canvas.lastX + x) / 2;
             const midY = (canvas.lastY + y) / 2;
         
             ctx.beginPath();
-            // Start the line at the previous midpoint
             ctx.moveTo(canvas.lastMidX, canvas.lastMidY);
-            // Bend the line TOWARDS the old mouse point, ENDING at the new midpoint
             ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
             ctx.stroke();
             
-            // Update all tracking variables for the next frame
             canvas.lastX = x;
             canvas.lastY = y;
             canvas.lastMidX = midX;
             canvas.lastMidY = midY;
         }
-    
-        // Reset tracking variables completely on pointer release
-        const resetTracking = () => {
-            isDrawing = false;
-            canvas.lastX = null;
-            canvas.lastY = null;
-            canvas.lastMidX = null;
-            canvas.lastMidY = null;
-            ctx.beginPath();
-        };
-
-        canvas.addEventListener('mouseup', resetTracking);
-        canvas.addEventListener('mouseout', resetTracking);
 
         clearBtn.addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
