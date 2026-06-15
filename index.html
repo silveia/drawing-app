@@ -22,10 +22,14 @@
             justify-content: center;
             gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
         }
         label {
             color: white;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         canvas {
             background-color: white;
@@ -37,7 +41,7 @@
             height: 90vh; /* screen takes up 90% of screen height */
             max-width: 1200px; /* prevents it from becoming too big if big screen size */
         }
-        button {
+        button, .file-upload-btn {
             padding: 5px 15px;
             cursor: pointer;
             background-color: #4a4a4a;
@@ -45,8 +49,9 @@
             border: none;
             border-radius: 4px;
             font-weight: bold;
+            font-size: 14px;
         }
-        button:hover {
+        button:hover, .file-upload-btn:hover {
             background-color: #5a5a5a;
         }
         #clearBtn {
@@ -54,6 +59,10 @@
         }
         #clearBtn:hover {
             background-color: #ff6b81;
+        }
+        /* Hide the ugly default file input */
+        #imageLoader {
+            display: none;
         }
     </style>
 </head>
@@ -69,6 +78,10 @@
 
         <label>color :p <input type="color" id="colorPicker" value="#000000"></label>
         <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
+        
+        <label class="file-upload-btn" for="imageLoader">upload stamp 📁</label>
+        <input type="file" id="imageLoader" accept="image/*">
+
         <button id="clearBtn">clear</button>
     </div>
 
@@ -81,9 +94,35 @@
         const brushSize = document.getElementById('brushSize');
         const clearBtn = document.getElementById('clearBtn');
         const brushType = document.getElementById('brushType');
+        const imageLoader = document.getElementById('imageLoader');
 
         let isDrawing = false;
         let currentTool = 'round';
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // 1. Setup a dynamic stamp image object
+        let stampImage = new Image();
+        let isImageLoaded = false;
+
+        // Default placeholder fallback in case no file is uploaded yet
+        stampImage.src = 'https://i.imgur.com/w983OOW.png'; 
+        stampImage.onload = () => { isImageLoaded = true; };
+
+        // 2. Listen for file uploads and convert them into drawing data
+        imageLoader.addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                stampImage = new Image();
+                stampImage.onload = () => {
+                    isImageLoaded = true;
+                };
+                stampImage.src = event.target.result;
+            };
+            if (e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
 
         function resizeCanvas() {
             const tempCanvas = document.createElement('canvas');
@@ -92,14 +131,11 @@
             tempCanvas.height = canvas.height;
             tempCtx.drawImage(canvas, 0, 0);
         
-            // Get the high-definition pixel scale factor of your monitor
             const scale = window.devicePixelRatio || 1; 
         
-            // Multiply the internal resolution by the high-definition scale factor
             canvas.width = canvas.clientWidth * scale;
             canvas.height = canvas.clientHeight * scale;
         
-            // Scale the drawing context so your brush strokes don't shrink down
             ctx.scale(scale, scale);
         
             ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -108,12 +144,16 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Dropdown Selection Logic
         brushType.addEventListener('change', () => {
             currentTool = brushType.value;
         });
 
-        // Reset tracking variables completely on pointer release
+        window.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
         const resetTracking = () => {
             isDrawing = false;
             canvas.lastX = null;
@@ -123,13 +163,11 @@
             ctx.beginPath();
         };
 
-        // Drawing Logic
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
             draw(e);
         });
 
-        // Global listeners (defined safely AFTER resetTracking)
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', resetTracking);
 
@@ -158,6 +196,9 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
+            mouseX = x;
+            mouseY = y;
+
             if (!canvas.lastX) {
                 canvas.lastX = x;
                 canvas.lastY = y;
@@ -177,6 +218,31 @@
             canvas.lastY = y;
             canvas.lastMidX = midX;
             canvas.lastMidY = midY;
+        }
+
+        // 3. Stamp file on 'S' keypress
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 's') {
+                if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
+                    drawCustomShape(mouseX, mouseY);
+                }
+            }
+        });
+
+        function drawCustomShape(x, y) {
+            if (!isImageLoaded) return; 
+            
+            ctx.save();
+            
+            // This pulls the slider size directly so your stamp scales with your brush slider!
+            const dynamicSize = Number(brushSize.value) * 2.5; 
+            
+            const targetX = x - (dynamicSize / 2);
+            const targetY = y - (dynamicSize / 2);
+            
+            ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
+            
+            ctx.restore();
         }
 
         clearBtn.addEventListener('click', () => {
