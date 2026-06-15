@@ -34,7 +34,7 @@
             cursor: crosshair;
 
             width: 90vw; /* screen takes up 90% of screen width */
-            height: 70vh; /* screen takes up 70% of screen height */
+            height: 90vh; /* screen takes up 90% of screen height */
             max-width: 1200px; /* prevents it from becoming too big if big screen size */
         }
         button {
@@ -84,21 +84,24 @@
 
         let isDrawing = false;
         let currentTool = 'round';
-        // Function to match the internal resolution to the display size
         function resizeCanvas() {
-            // Save what you've drawn so it doesn't instantly wipe out on resize
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height;
             tempCtx.drawImage(canvas, 0, 0);
         
-            // Set the internal pixel dimensions to match the CSS display dimensions
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
+            // Get the high-definition pixel scale factor of your monitor (Macs are usually 2x or 3x)
+            const scale = window.devicePixelRatio || 1; 
         
-            // Restore your drawings back onto the resized canvas
-            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+            // Multiply the internal resolution by the high-definition scale factor
+            canvas.width = canvas.clientWidth * scale;
+            canvas.height = canvas.clientHeight * scale;
+        
+            // Scale the drawing context so your brush strokes don't shrink down
+            ctx.scale(scale, scale);
+        
+            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.clientWidth, canvas.clientHeight);
         }
         
         resizeCanvas();
@@ -148,14 +151,42 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            ctx.lineTo(x, y);
-            ctx.stroke();
+    if (!canvas.lastX) {
+                canvas.lastX = x;
+                canvas.lastY = y;
+            }
+    
+            // Calculate a midpoint between the last spot and the current spot
+            const midX = (canvas.lastX + x) / 2;
+            const midY = (canvas.lastY + y) / 2;
+    
             ctx.beginPath();
-            ctx.moveTo(x, y);
+            // Start the line at the previous midpoint
+            ctx.moveTo(canvas.lastMidX || canvas.lastX, canvas.lastMidY || canvas.lastY);
+            // Bend the line TOWARDS the old mouse point, ENDING at the new midpoint
+            ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
+            ctx.stroke();
+            
+            // Save the current midpoints so the next line segment connects perfectly
+            canvas.lastMidX = midX;
+            canvas.lastMidY = midY;
         }
-
+    
+        // Crucial: Reset the tracking variables when you lift your mouse up!
         canvas.addEventListener('mouseup', () => {
             isDrawing = false;
+            canvas.lastX = null;
+            canvas.lastY = null;
+            canvas.lastMidX = null; // <-- ADD THIS LINE
+            canvas.lastMidY = null; // <-- ADD THIS LINE
+            ctx.beginPath();
+        });
+        canvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+            canvas.lastX = null;
+            canvas.lastY = null;
+            canvas.lastMidX = null; // <-- ADD THIS LINE
+            canvas.lastMidY = null; // <-- ADD THIS LINE
             ctx.beginPath();
         });
 
