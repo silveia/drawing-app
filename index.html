@@ -33,12 +33,19 @@
         #toolbar {
             background-color: #333;
             width: 100%;
-            padding: 10px;
+            padding: 10px 20px;
             display: flex;
-            justify-content: center;
-            gap: 15px;
+            /* ✨ This pushes group 1 to the far left and group 2 to the far right! */
+            justify-content: space-between; 
             align-items: center;
-            flex-wrap: wrap;
+            box-sizing: border-box;
+        }
+        
+        /* ✨ New style block to handle the spacing inside each separate group */
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Spacing between elements inside the group */
         }
         label {
             color: white;
@@ -54,7 +61,7 @@
             cursor: crosshair;
 
             width: 90vw; /* screen takes up 90% of screen width */
-            height: 90vh; /* screen takes up 90% of screen height */
+            height: 80vh; /* screen takes up 80% of screen height */
             max-width: 1200px; /* prevents it from becoming too big if big screen size */
         }
         button, .file-upload-btn {
@@ -71,37 +78,44 @@
             background-color: #5a5a5a;
         }
         #clearBtn {
-            background-color: #ff4757;
+            background-color: #4a4a4a;
         }
         #clearBtn:hover {
-            background-color: #ff6b81;
+            background-color: #5a5a5a;
         }
         /* Hide the ugly default file input */
         #imageLoader {
             display: none;
         }
+        #brushSize {
+            accent-color: #4a4a4a;
     </style>
 </head>
 <body>
 
     <div id="toolbar">
-        <label for="brushType">tool :> </label>
-        <select id="brushType">
-            <option value="round">round brush </option>
-            <option value="square">square bruh</option>
-            <option value="eraser">eraser</option>
-        </select>
-
-        <label>color :p <input type="color" id="colorPicker" value="#000000"></label>
-        <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
-        
-        <label class="file-upload-btn" for="imageLoader">upload stamp</label>
-        <input type="file" id="imageLoader" accept="image/*">
-
-        <label class="file-upload-btn" for="charLoader">upload character skin  </label>
-        <input type="file" id="charLoader" accept="image/*" style="display: none;">
-        <button id="spawnBtn">spawn character (*^^*)♡  </button>
-        <button id="clearBtn">clear</button>
+        <div class="toolbar-group">
+            <label for="brushType">tool :> </label>
+            <select id="brushType">
+                <option value="round">round brush </option>
+                <option value="square">square bruh</option>
+                <option value="eraser">eraser</option>
+            </select>
+    
+            <label>color :p <input type="color" id="colorPicker" value="#000000"></label>
+            <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
+        </div>
+    
+        <div class="toolbar-group">
+            <label class="file-upload-btn" for="imageLoader">upload stamp</label>
+            <input type="file" id="imageLoader" accept="image/*">
+    
+            <label class="file-upload-btn" for="charLoader">upload character skin </label>
+            <input type="file" id="charLoader" accept="image/*" style="display: none;">
+            
+            <button id="spawnBtn">spawn character</button>
+            <button id="clearBtn">clear</button>
+        </div>
     </div>
     <div id="canvas-container">
         <canvas id="paintCanvas"></canvas>
@@ -118,7 +132,6 @@
         const container = document.getElementById('canvas-container');
         const spawnBtn = document.getElementById('spawnBtn');
         const characters = []; // array to hold all the characters created
-        let charImgUrl = 'https://i.imgur.com/vHqY7bM.png';   
         let isCharImageLoaded = false;
         const charLoader = document.getElementById('charLoader');
 
@@ -130,7 +143,6 @@
         let stampImage = new Image();
         let isImageLoaded = false;
 
-        stampImage.src = 'https://i.imgur.com/w983OOW.png'; 
         stampImage.onload = () => { isImageLoaded = true; };
 
         imageLoader.addEventListener('change', (e) => {
@@ -351,7 +363,7 @@
         });
         spawnBtn.addEventListener('click', () => {
             if (!isCharImageLoaded) {
-                alert("error - pls upload image"); // Optional alert message
+                alert("error - pls upload skin"); // Optional alert message
                 return; 
             }
             
