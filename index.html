@@ -60,19 +60,19 @@
 <body>
 
     <div id="toolbar">
-        <label for="brushType">tool :>  </label>
+        <label for="brushType">tool :> </label>
         <select id="brushType">
             <option value="round">round brush </option>
             <option value="square">square bruh</option>
             <option value="eraser">eraser</option>
         </select>
 
-        <label>color :p  <input type="color" id="colorPicker" value="#000000"></label>
-        <label>size  <input type="range" id="brushSize" min="1" max="50" value="5"></label>
+        <label>color :p <input type="color" id="colorPicker" value="#000000"></label>
+        <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
         <button id="clearBtn">clear</button>
     </div>
 
-    <canvas id="paintCanvas" width="800" height="500"></canvas>
+    <canvas id="paintCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('paintCanvas');
@@ -84,6 +84,7 @@
 
         let isDrawing = false;
         let currentTool = 'round';
+
         function resizeCanvas() {
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
@@ -91,7 +92,7 @@
             tempCanvas.height = canvas.height;
             tempCtx.drawImage(canvas, 0, 0);
         
-            // Get the high-definition pixel scale factor of your monitor (Macs are usually 2x or 3x)
+            // Get the high-definition pixel scale factor of your monitor
             const scale = window.devicePixelRatio || 1; 
         
             // Multiply the internal resolution by the high-definition scale factor
@@ -108,10 +109,10 @@
         
         // Automatically adjust the canvas if you resize the browser window
         window.addEventListener('resize', resizeCanvas);
-        // Tool Selection Logic
+
         // Dropdown Selection Logic
         brushType.addEventListener('change', () => {
-            currentTool = brushType.value; // Automatically sets currentTool to 'round', 'square', or 'eraser'
+            currentTool = brushType.value;
         });
 
         // Drawing Logic
@@ -131,7 +132,7 @@
             if (currentTool === 'round' || currentTool === 'square') {
                 ctx.strokeStyle = colorPicker.value;
             } else {
-                ctx.strokeStyle = '#ffffff'; // White matches the canvas background
+                ctx.strokeStyle = '#ffffff'; 
             }
         
             ctx.lineWidth = brushSize.value;
@@ -151,44 +152,43 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-    if (!canvas.lastX) {
+            if (!canvas.lastX) {
                 canvas.lastX = x;
                 canvas.lastY = y;
+                canvas.lastMidX = x;
+                canvas.lastMidY = y;
             }
-    
+        
             // Calculate a midpoint between the last spot and the current spot
             const midX = (canvas.lastX + x) / 2;
             const midY = (canvas.lastY + y) / 2;
-    
+        
             ctx.beginPath();
             // Start the line at the previous midpoint
-            ctx.moveTo(canvas.lastMidX || canvas.lastX, canvas.lastMidY || canvas.lastY);
+            ctx.moveTo(canvas.lastMidX, canvas.lastMidY);
             // Bend the line TOWARDS the old mouse point, ENDING at the new midpoint
             ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
             ctx.stroke();
             
-            // Save the current midpoints so the next line segment connects perfectly
+            // Update all tracking variables for the next frame
+            canvas.lastX = x;
+            canvas.lastY = y;
             canvas.lastMidX = midX;
             canvas.lastMidY = midY;
         }
     
-        // Crucial: Reset the tracking variables when you lift your mouse up!
-        canvas.addEventListener('mouseup', () => {
+        // Reset tracking variables completely on pointer release
+        const resetTracking = () => {
             isDrawing = false;
             canvas.lastX = null;
             canvas.lastY = null;
-            canvas.lastMidX = null; // <-- ADD THIS LINE
-            canvas.lastMidY = null; // <-- ADD THIS LINE
+            canvas.lastMidX = null;
+            canvas.lastMidY = null;
             ctx.beginPath();
-        });
-        canvas.addEventListener('mouseout', () => {
-            isDrawing = false;
-            canvas.lastX = null;
-            canvas.lastY = null;
-            canvas.lastMidX = null; // <-- ADD THIS LINE
-            canvas.lastMidY = null; // <-- ADD THIS LINE
-            ctx.beginPath();
-        });
+        };
+
+        canvas.addEventListener('mouseup', resetTracking);
+        canvas.addEventListener('mouseout', resetTracking);
 
         clearBtn.addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
