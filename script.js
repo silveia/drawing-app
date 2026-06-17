@@ -315,7 +315,7 @@ clearBtn.addEventListener('click', () => {
 });
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
-        alert("error - pls upload a character skin"); // Optional alert message
+        alert("error - pls upload sprite"); // Optional alert message
         return; 
     }
     
