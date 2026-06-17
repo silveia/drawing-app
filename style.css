@@ -119,7 +119,8 @@ select {
 }
 
 /* game button */
-#customImageBtn {
+
+#gameBtn {
     position: fixed;      /* 📌 Locks the button to the screen layout */
     bottom: 20px;         /* 📏 20px away from the bottom edge */
     right: 20px;          /* 📏 20px away from the right edge */
@@ -144,10 +145,56 @@ select {
 }
 
 /* Hover effects */
-#customImageBtn:hover {
+#gameBtn:hover {
     transform: scale(1.05); /* Slightly pops out when hovered */
 }
 
-#customImageBtn:active {
+#gameBtn:active {
     transform: scale(0.95); /* Shrinks slightly when clicked */
+}
+
+/* mini window */
+
+#miniWindow {
+    position: fixed;
+    top: 30%;
+    left: 40%;
+    width: 300px;
+    background-color: #E7E3E5;
+    border: 3px solid #49393F;
+    z-index: 20; 
+    display: none; 
+    box-sizing: border-box;
+}
+
+/* Header bar used to drag the window around */
+#windowHeader {
+    padding: 6px 10px;
+    cursor: move; 
+    background-color: #49393F;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    user-select: none; 
+}
+
+/* Window close button */
+#closeWindowBtn {
+    background-color: #775F6C;
+    border: 1px solid white;
+    border-radius: 0;
+    padding: 0px 6px;
+    font-size: 11px;
+}
+#closeWindowBtn:hover {
+    background-color: #A04650; 
+}
+
+/* Internal padding for window content */
+#windowContent {
+    padding: 15px;
+    color: #49393F;
+    font-size: 14px;
 }
