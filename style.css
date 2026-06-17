@@ -123,8 +123,8 @@ select {
     position: fixed;      /* 📌 Locks the button to the screen layout */
     bottom: 20px;         /* 📏 20px away from the bottom edge */
     right: 20px;          /* 📏 20px away from the right edge */
-    width: 50px;          /* 📐 Button width */
-    height: 50px;         /* 📐 Button height */
+    width: 44px;          /* 📐 Button width */
+    height: 44px;         /* 📐 Button height */
     background-color: #775F6C; /* Matches your toolbar theme */
     border: 2px solid white;
     border-radius: 8px;   /* Slightly rounded pixel-art corners */
