@@ -145,7 +145,6 @@ select {
 
 /* Hover effects */
 #customImageBtn:hover {
-    background-color: #624D5A;
     transform: scale(1.05); /* Slightly pops out when hovered */
 }
 
