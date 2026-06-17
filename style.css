@@ -137,7 +137,7 @@ select {
 }
 
 /* Style for the small image inside the button */
-#btnIcon {
+#gameIcon {
     width: 70%;           /* Scales image cleanly inside the button square */
     height: 70%;
     object-fit: contain;  /* Prevents your image from stretching weirdly */
