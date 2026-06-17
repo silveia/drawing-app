@@ -11,6 +11,11 @@ const characters = []; // array to hold all the characters created
 let charImgUrl = '';
 let isCharImageLoaded = false;
 const charLoader = document.getElementById('charLoader');
+const customBtn = document.getElementById('customImageBtn');
+
+customBtn.addEventListener('click', () => {
+    blablablablabla
+});
 
 let isDrawing = false;
 let currentTool = 'round';
