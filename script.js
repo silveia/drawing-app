@@ -218,33 +218,28 @@ function drawCustomShape(x, y) {
 }
 class Shimeji {
     constructor() {
-        // Choose a random horizontal starting position on the canvas width
         this.x = Math.random() * (window.innerWidth - 100);
-        this.y = -50; // Start just above the canvas ceiling
+        this.y = -50; 
         
-        this.velocityY = 0; // Dropping velocity
-        this.velocityX = (Math.random() - 0.5) * 2; // Random wandering velocity
+        this.velocityY = 0; 
+        this.velocityX = (Math.random() - 0.5) * 2; 
         this.gravity = 0.4;
-        this.bounceFactor = -0.3; // Cute impact landing bounce
+        this.bounceFactor = -0.3; 
         this.isGrounded = false;
 
-        // new behavior states ( falling / walking / idle / jumping / climbing )
         this.state = 'falling'; 
         this.stateTimer = 0;
 
-        
-        // Dynamically build an <img> element for this character
         this.element = document.createElement('img');
         this.element.src = charImgUrl;
         this.element.classList.add('shimeji-char');
-        document.body.appendChild(this.element); // append to body
+        document.body.appendChild(this.element); 
         
         this.updateElementPosition();
     }
 
-    // 🎲 Helper to pick a random action when grounded
     chooseNewState() {
-        this.stateTimer = Math.floor(Math.random() * 120) + 60; // Hold state for 1-3 seconds
+        this.stateTimer = Math.floor(Math.random() * 120) + 60; 
         const choices = ['walking', 'idle', 'jumping'];
         this.state = choices[Math.floor(Math.random() * choices.length)];
 
@@ -253,8 +248,8 @@ class Shimeji {
         } else if (this.state === 'idle') {
             this.velocityX = 0;
         } else if (this.state === 'jumping') {
-            this.velocityY = -8 - Math.random() * 5; // Negative velocity launches them UP
-            this.velocityX = (Math.random() - 0.5) * 4; // Give them some side arc
+            this.velocityY = -8 - Math.random() * 5; 
+            this.velocityX = (Math.random() - 0.5) * 4; 
             this.isGrounded = false;
             this.state = 'falling';
         }
@@ -263,15 +258,12 @@ class Shimeji {
     update() {
         const floorLevel = window.innerHeight - 100;
 
-        
-// 1: falling/airborne physics >>
-        
+        // 1: falling/airborne physics
         if (!this.isGrounded && this.state !== 'climbing') {
             this.velocityY += this.gravity;
             this.y += this.velocityY;
             this.x += this.velocityX;
 
-            // hit the floor?
             if (this.y >= floorLevel) {
                 this.y = floorLevel;
                 this.velocityY = this.velocityY * this.bounceFactor; 
@@ -283,73 +275,56 @@ class Shimeji {
                 }
             }
         }
-
-        
-// 2: climbing walls
-        
+        // 2: climbing walls
         else if (this.state === 'climbing') {
-            this.y += this.velocityY; // Move up or down the wall
+            this.y += this.velocityY; 
             this.stateTimer--;
 
-            // Randomly stop climbing, slide off, or reach the top/bottom
             if (this.stateTimer <= 0 || this.y <= 0 || this.y >= floorLevel) {
                 this.state = 'falling';
                 this.isGrounded = false;
-                // Push them slightly off the wall as they drop
                 this.velocityX = this.x <= 0 ? 1.5 : -1.5; 
-                this.element.style.transform = 'rotate(0deg)'; // Reset rotation
+                this.element.style.transform = 'rotate(0deg)'; 
             }
         }
-
-        
-// 3: grounded animations (idle/walking)
-    
+        // 3: grounded animations (idle/walking)
         else {
-                    this.x += this.velocityX;
-                    this.stateTimer--;
-        
-                    // Time to switch up what they are doing!
-                    if (this.stateTimer <= 0) {
-                        this.chooseNewState();
-                    }
-        
-                    // Check if they bumped into a wall while walking
-                    if (this.x <= 0 || this.x >= window.innerWidth - 100) {
-                        this.x = this.x <= 0 ? 0 : window.innerWidth - 100;
-                        
-                        // 🧗 50% chance to climb the wall, 50% chance to turn around
-                        if (Math.random() > 0.5) {
-                            this.state = 'climbing';
-                            this.isGrounded = false;
-                            this.velocityY = -1.5; // Climb upward speed
-                            this.velocityX = 0;
-                            this.stateTimer = Math.floor(Math.random() * 150) + 100; // Climbing duration
-                            
-                            // Rotate image sideways to make it look like they are climbing
-                            this.element.style.transform = this.x <= 0 ? 'rotate(90deg)' : 'rotate(-90deg)';
-                        } else {
-                            this.velocityX *= -1; // Just turn around
-                        }
-                    }
-                }
-        
-                // --- SCREEN BOUNDARIES & VISUAL FLIPPING ---
-                // Prevent them from wandering off-screen left/right
-                if (this.x < 0) this.x = 0;
-                if (this.x > window.innerWidth - 100) this.x = window.innerWidth - 100;
-        
-                // Keep standard left/right flip tracking ONLY if they aren't climbing
-                if (this.state !== 'climbing' && this.velocityX !== 0) {
-                    this.element.style.transform = this.velocityX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-                }
-        
-                this.updateElementPosition();
-            }
-
+            this.x += this.velocityX;
+            this.stateTimer--;
     
+            if (this.stateTimer <= 0) {
+                this.chooseNewState();
+            }
+    
+            if (this.x <= 0 || this.x >= window.innerWidth - 100) {
+                this.x = this.x <= 0 ? 0 : window.innerWidth - 100;
+                
+                if (Math.random() > 0.5) {
+                    this.state = 'climbing';
+                    this.isGrounded = false;
+                    this.velocityY = -1.5; 
+                    this.velocityX = 0;
+                    this.stateTimer = Math.floor(Math.random() * 150) + 100; 
+                    
+                    this.element.style.transform = this.x <= 0 ? 'rotate(90deg)' : 'rotate(-90deg)';
+                } else {
+                    this.velocityX *= -1; 
+                }
+            }
+        }
+        
+        // 🛠️ FIX: These lines are now safely wrapped inside the update() function!
+        if (this.x < 0) this.x = 0;
+        if (this.x > window.innerWidth - 100) this.x = window.innerWidth - 100;
+
+        if (this.state !== 'climbing' && this.velocityX !== 0) {
+            this.element.style.transform = this.velocityX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
+
+        this.updateElementPosition();
+    } // 🔓 This curly bracket now correctly closes the update() function
 
     updateElementPosition() {
-        // Move the actual HTML image across the screen using pixels
         this.element.style.left = `${this.x}px`;
         this.element.style.top = `${this.y}px`;
     }
