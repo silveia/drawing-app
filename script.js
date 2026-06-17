@@ -11,11 +11,55 @@ const characters = []; // array to hold all the characters created
 let charImgUrl = '';
 let isCharImageLoaded = false;
 const charLoader = document.getElementById('charLoader');
-const customBtn = document.getElementById('customImageBtn');
+const miniWindow = document.getElementById('miniWindow');
+const gameBtn = document.getElementById('gameBtn'); // 🔄 Updated variable and ID lookup
+const closeWindowBtn = document.getElementById('closeWindowBtn');
+const windowHeader = document.getElementById('windowHeader');
 
-customBtn.addEventListener('click', () => {
-    blablablablabla
+gameBtn.addEventListener('click', () => {
+    miniWindow.style.display = 'block'; 
 });
+
+closeWindowBtn.addEventListener('click', () => {
+    miniWindow.style.display = 'none'; 
+});
+
+// draggable window code >>
+
+let isDraggingWindow = false;
+let startX, startY, initialWindowLeft, initialWindowTop;
+
+windowHeader.addEventListener('mousedown', (e) => {
+    isDraggingWindow = true;
+    
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const rect = miniWindow.getBoundingClientRect();
+    initialWindowLeft = rect.left;
+    initialWindowTop = rect.top;
+    
+    windowHeader.style.backgroundColor = '#624D5A'; 
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!isDraggingWindow) return;
+    
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+    
+    miniWindow.style.left = `${initialWindowLeft + deltaX}px`;
+    miniWindow.style.top = `${initialWindowTop + deltaY}px`;
+});
+
+window.addEventListener('mouseup', () => {
+    if (isDraggingWindow) {
+        isDraggingWindow = false;
+        windowHeader.style.backgroundColor = '#49393F'; 
+    }
+});
+
+// other code >>
 
 let isDrawing = false;
 let currentTool = 'round';
