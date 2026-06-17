@@ -198,3 +198,8 @@ select {
     color: #49393F;
     font-size: 14px;
 }
+
+/* Add this to the very bottom of style.css */
+.hidden-window {
+    display: none !important;
+}
