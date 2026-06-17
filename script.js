@@ -17,11 +17,12 @@ const closeWindowBtn = document.getElementById('closeWindowBtn');
 const windowHeader = document.getElementById('windowHeader');
 
 gameBtn.addEventListener('click', () => {
+    miniWindow.classList.remove('hidden-window'); // Reveals the window
     miniWindow.style.display = 'block'; 
 });
 
 closeWindowBtn.addEventListener('click', () => {
-    miniWindow.style.display = 'none'; 
+    miniWindow.classList.add('hidden-window'); // Hides the window
 });
 
 // draggable window code >>
