@@ -145,7 +145,7 @@ function draw(e) {
 
 // 3. Stamp file on 'S' keypress
 window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 's') {
+    if (e.key === 'Shift') {
         if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
             drawCustomShape(mouseX, mouseY);
         }
@@ -245,7 +245,7 @@ clearBtn.addEventListener('click', () => {
 });
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
-        alert("error - pls upload skin"); // Optional alert message
+        alert("error - pls upload a character skin"); // Optional alert message
         return; 
     }
     
