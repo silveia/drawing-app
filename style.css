@@ -117,3 +117,41 @@ button:hover, .file-upload-btn:hover {
 select {
     padding-right: 25px; 
 }
+
+/* game button */
+#customImageBtn {
+    position: fixed;      /* 📌 Locks the button to the screen layout */
+    bottom: 20px;         /* 📏 20px away from the bottom edge */
+    right: 20px;          /* 📏 20px away from the right edge */
+    width: 50px;          /* 📐 Button width */
+    height: 50px;         /* 📐 Button height */
+    background-color: #775F6C; /* Matches your toolbar theme */
+    border: 2px solid white;
+    border-radius: 8px;   /* Slightly rounded pixel-art corners */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 10;          /* 🔝 Keeps it layered on top of wandering Shimejis */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease;
+}
+
+/* Style for the small image inside the button */
+#btnIcon {
+    width: 70%;           /* Scales image cleanly inside the button square */
+    height: 70%;
+    object-fit: contain;  /* Prevents your image from stretching weirdly */
+    image-rendering: pixelated; /* Keeps pixel art looking sharp! */
+}
+
+/* Hover effects */
+#customImageBtn:hover {
+    background-color: #624D5A;
+    transform: scale(1.05); /* Slightly pops out when hovered */
+}
+
+#customImageBtn:active {
+    transform: scale(0.95); /* Shrinks slightly when clicked */
+}
