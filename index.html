@@ -10,8 +10,8 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             background-color: transparent;
             border: none;
             cursor: pointer;
@@ -33,7 +33,7 @@
             /* Force the internal browser color swatch to look like a circle */
         #colorPicker::-webkit-color-swatch {
              border-radius: 50%;
-             border: 2px solid white; 
+             border: 2px solid white;
              box-sizing: border-box;
         }
     
@@ -330,7 +330,7 @@
         class Shimeji {
             constructor() {
                 // Choose a random horizontal starting position on the canvas width
-                this.x = Math.random() * (canvas.clientWidth - 100);
+                this.x = Math.random() * (window.innerWidth - 100);
                 this.y = -50; // Start just above the canvas ceiling
                 
                 this.velocityY = 0; // Dropping velocity
@@ -343,7 +343,7 @@
                 this.element = document.createElement('img');
                 this.element.src = charImgUrl;
                 this.element.classList.add('shimeji-char');
-                container.appendChild(this.element); // Pop it into the world container
+                document.body.appendChild(this.element); // append to body
                 
                 this.updateElementPosition();
             }
@@ -354,38 +354,38 @@
                     this.velocityY += this.gravity;
                     this.y += this.velocityY;
                     this.x += this.velocityX;
-        
-                    const floorLevel = canvas.clientHeight - 100;
+            
+                    // 🔀 CHANGE: Floor level is now based on the window height
+                    const floorLevel = window.innerHeight - 100;
                     
-                    // Check if they hit the bottom edge of the white canvas space
+                    // Check if they hit the bottom edge of the screen
                     if (this.y >= floorLevel) {
                         this.y = floorLevel;
                         this.velocityY = this.velocityY * this.bounceFactor; // Bounce up!
                         
-                        // If they are barely bouncing anymore, set them to walk
                         if (Math.abs(this.velocityY) < 1) {
                             this.velocityY = 0;
                             this.isGrounded = true;
-                            this.velocityX = (Math.random() > 0.5 ? 1 : -1) * 0.8; // Set pacing speed
+                            this.velocityX = (Math.random() > 0.5 ? 1 : -1) * 0.8; 
                         }
                     }
                 } else {
                     // Walking movement logic
                     this.x += this.velocityX;
-        
-                    // Bounce off left/right walls of the canvas
+            
+                    // 🔀 CHANGE: Bounce off left/right walls of the total browser window
                     if (this.x <= 0) {
                         this.x = 0;
                         this.velocityX *= -1;
-                    } else if (this.x >= canvas.clientWidth - 100) {
-                        this.x = canvas.clientWidth - 100;
+                    } else if (this.x >= window.innerWidth - 100) {
+                        this.x = window.innerWidth - 100;
                         this.velocityX *= -1;
                     }
-        
+            
                     // Look right if moving right, flip image left if moving left
                     this.element.style.transform = this.velocityX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
                 }
-        
+            
                 this.updateElementPosition();
             }
         
@@ -396,7 +396,12 @@
             }
         }
         clearBtn.addEventListener('click', () => {
+            // remove canvas drawings >>
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // remove characters >>
+            characters.forEach(char => char.element.remove());
+            characters.length = 0;
         });
         spawnBtn.addEventListener('click', () => {
             if (!isCharImageLoaded) {
