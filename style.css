@@ -1,0 +1,119 @@
+#colorPicker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: inline-block; 
+    overflow: hidden;     
+    border-radius: 50%;    /* Perfect circle clip for the outer edge */
+}
+
+    /* 🛠️ THE FIX: Force the internal wrapper to be transparent and round */
+ #colorPicker::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+}
+    
+    /* Force the internal browser color swatch to look like a circle */
+#colorPicker::-webkit-color-swatch {
+     border-radius: 50%;
+     border: 2px solid white;
+     box-sizing: border-box;
+}
+
+#colorPicker::-moz-color-swatch {
+    border-radius: 50%;
+    border: 2px solid white;
+    box-sizing: border-box;
+}
+
+#canvas-container {
+    position: relative;
+    margin-top: 20px;
+    width: 100vw; 
+    height: 88vh; 
+    max-width: 1200px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.shimeji-char {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    pointer-events: none; 
+    user-select: none;
+    z-index: 5;
+}
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #E7E3E5;
+    font-family: 'Pixelify Sans', sans-serif;
+}
+#toolbar {
+    background-color: #49393F;
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    box-sizing: border-box;
+}
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+label {
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+canvas {
+    background-color: white;
+    cursor: crosshair;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+button, .file-upload-btn, select, option {
+    padding: 5px 15px;
+    cursor: pointer;
+    background-color: #775F6C;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 14px;
+    font-family: inherit;
+}
+button:hover, .file-upload-btn:hover {
+    background-color: #624D5A;
+}
+#clearBtn {
+    background-color: #775F6C;
+}
+#clearBtn:hover {
+    background-color: #624D5A;
+}
+#imageLoader {
+    display: none;
+}
+#brushSize{
+    accent-color: #775F6C;
+}
+select {
+    padding-right: 25px; 
+}
