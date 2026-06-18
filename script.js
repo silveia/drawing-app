@@ -176,12 +176,6 @@ brushType.addEventListener('change', () => {
     currentTool = brushType.value;
 });
 
-window.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    mouseX = e.clientX - rect.left;
-    mouseY = e.clientY - rect.top;
-});
-
 const resetTracking = () => {
     isDrawing = false;
     canvas.lastX = null;
@@ -201,11 +195,17 @@ canvas.addEventListener('mousedown', (e) => {
     draw(e);
 });
 
-window.addEventListener('mousemove', draw);
 window.addEventListener('mouseup', resetTracking);
 
 function draw(e) {
-    if (!isDrawing || !e.clientX || !e.clientY) return;        
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    mouseX = x;
+    mouseY = y;
+
+    if (!isDrawing) return;        
     
     if (currentTool === 'round' || currentTool === 'square') {
         ctx.strokeStyle = colorPicker.value;
@@ -223,13 +223,6 @@ function draw(e) {
         ctx.lineJoin = 'round';
     }
     ctx.imageSmoothingEnabled = true;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    mouseX = x;
-    mouseY = y;
 
     if (!canvas.lastX) {
         canvas.lastX = x;
@@ -262,6 +255,8 @@ function draw(e) {
     canvas.lastMidX = midX;
     canvas.lastMidY = midY;
 }
+
+window.addEventListener('mousemove', draw);
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
