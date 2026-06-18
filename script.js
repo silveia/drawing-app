@@ -234,4 +234,192 @@ function draw(e) {
     }
     ctx.imageSmoothingEnabled = true;
 
-    const rect =
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    mouseX = x;
+    mouseY = y;
+
+    if (!canvas.lastX) {
+        canvas.lastX = x;
+        canvas.lastY = y;
+        canvas.lastMidX = x;
+        canvas.lastMidY = y;
+    }
+
+    const midX = (canvas.lastX + x) / 2;
+    const midY = (canvas.lastY + y) / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(canvas.lastMidX, canvas.lastMidY);
+    ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
+    ctx.stroke();
+    
+    // Save points with distance limiter optimization
+    const lastPoint = currentStroke[currentStroke.length - 1];
+    if (!lastPoint || Math.abs(x - lastPoint.x) > 2 || Math.abs(y - lastPoint.y) > 2) {
+        currentStroke.push({
+            x: x,
+            y: y,
+            color: ctx.strokeStyle,
+            size: ctx.lineWidth,
+            tool: currentTool
+        });
+    }
+    
+    canvas.lastX = x;
+    canvas.lastY = y;
+    canvas.lastMidX = midX;
+    canvas.lastMidY = midY;
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Shift') {
+        if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
+            drawCustomShape(mouseX, mouseY);
+        }
+    }
+});
+
+function drawCustomShape(x, y) {
+    if (!isImageLoaded) return; 
+    ctx.save();
+    const dynamicSize = Number(brushSize.value) * 2.5; 
+    const targetX = x - (dynamicSize / 2);
+    const targetY = y - (dynamicSize / 2);
+    ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
+    ctx.restore();
+}
+
+// Shimeji Desktop Pet Class
+class Shimeji {
+    constructor() {
+        this.x = Math.random() * (window.innerWidth - 100);
+        this.y = -50; 
+        this.velocityY = 0; 
+        this.velocityX = (Math.random() - 0.5) * 2; 
+        this.gravity = 0.4;
+        this.bounceFactor = -0.3; 
+        this.isGrounded = false;
+        this.state = 'falling'; 
+        this.stateTimer = 0;
+
+        this.element = document.createElement('img');
+        this.element.src = charImgUrl;
+        this.element.classList.add('shimeji-char');
+        document.body.appendChild(this.element); 
+        this.updateElementPosition();
+    }
+
+    chooseNewState() {
+        this.stateTimer = Math.floor(Math.random() * 120) + 60; 
+        const choices = ['walking', 'idle', 'jumping'];
+        this.state = choices[Math.floor(Math.random() * choices.length)];
+
+        if (this.state === 'walking') {
+            this.velocityX = (Math.random() > 0.5 ? 1 : -1) * 1.2;
+        } else if (this.state === 'idle') {
+            this.velocityX = 0;
+        } else if (this.state === 'jumping') {
+            this.velocityY = -8 - Math.random() * 5; 
+            this.velocityX = (Math.random() - 0.5) * 4; 
+            this.isGrounded = false;
+            this.state = 'falling';
+        }
+    }
+    
+    update() {
+        const floorLevel = window.innerHeight - 100;
+
+        if (!this.isGrounded && this.state !== 'climbing') {
+            this.velocityY += this.gravity;
+            this.y += this.velocityY;
+            this.x += this.velocityX;
+
+            if (this.y >= floorLevel) {
+                this.y = floorLevel;
+                this.velocityY = this.velocityY * this.bounceFactor; 
+                if (Math.abs(this.velocityY) < 1) {
+                    this.velocityY = 0;
+                    this.isGrounded = true;
+                    this.chooseNewState();
+                }
+            }
+        }
+        else if (this.state === 'climbing') {
+            this.y += this.velocityY; 
+            this.stateTimer--;
+
+            if (this.stateTimer <= 0 || this.y <= 0 || this.y >= floorLevel) {
+                this.state = 'falling';
+                this.isGrounded = false;
+                this.velocityX = this.x <= 0 ? 1.5 : -1.5; 
+                this.element.style.transform = 'rotate(0deg)'; 
+            }
+        }
+        else {
+            this.x += this.velocityX;
+            this.stateTimer--;
+            if (this.stateTimer <= 0) this.chooseNewState();
+    
+            if (this.x <= 0 || this.x >= window.innerWidth - 100) {
+                this.x = this.x <= 0 ? 0 : window.innerWidth - 100;
+                if (Math.random() > 0.5) {
+                    this.state = 'climbing';
+                    this.isGrounded = false;
+                    this.velocityY = -1.5; 
+                    this.velocityX = 0;
+                    this.stateTimer = Math.floor(Math.random() * 150) + 100; 
+                    this.element.style.transform = this.x <= 0 ? 'rotate(90deg)' : 'rotate(-90deg)';
+                } else {
+                    this.velocityX *= -1; 
+                }
+            }
+        }
+        
+        if (this.x < 0) this.x = 0;
+        if (this.x > window.innerWidth - 100) this.x = window.innerWidth - 100;
+
+        if (this.state !== 'climbing' && this.velocityX !== 0) {
+            this.element.style.transform = this.velocityX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
+        this.updateElementPosition();
+    }
+
+    updateElementPosition() {
+        this.element.style.left = `${this.x}px`;
+        this.element.style.top = `${this.y}px`;
+    }
+}
+
+clearBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    characters.forEach(char => char.element.remove());
+    characters.length = 0;
+    drawingHistory.length = 0; 
+});
+
+spawnBtn.addEventListener('click', () => {
+    if (!isCharImageLoaded) {
+        alert("error - pls upload sprite"); 
+        return; 
+    }
+    characters.push(new Shimeji());
+});
+
+function animationTick() {
+    characters.forEach(char => char.update());
+    requestAnimationFrame(animationTick);
+}
+requestAnimationFrame(animationTick);
+
+// Auto-Load Art on boot up
+window.addEventListener('DOMContentLoaded', () => {
+    const savedData = localStorage.getItem('mySavedArt');
+    if (savedData) {
+        const parsedHistory = JSON.parse(savedData);
+        parsedHistory.forEach(stroke => drawingHistory.push(stroke));
+        redrawAllStrokes();
+    }
+});
