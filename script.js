@@ -7,7 +7,7 @@ const brushType = document.getElementById('brushType');
 const imageLoader = document.getElementById('imageLoader');
 const container = document.getElementById('canvas-container');
 const spawnBtn = document.getElementById('spawnBtn');
-const characters = []; // array to hold all the characters created
+const characters = []; 
 let charImgUrl = '';
 let isCharImageLoaded = false;
 const charLoader = document.getElementById('charLoader');
@@ -16,16 +16,13 @@ const gameBtn = document.getElementById('gameBtn');
 const closeWindowBtn = document.getElementById('closeWindowBtn');
 const windowHeader = document.getElementById('windowHeader');
 
-// Grab the customizable game container handles
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
 const startGameBtn = document.getElementById('startGameBtn');
 
-// New Save and Load buttons
 const saveBtn = document.getElementById('saveBtn');
 const loadBtn = document.getElementById('loadBtn');
 
-// Tracking variables for drawing and history
 let isDrawing = false;
 let currentTool = 'round';
 let mouseX = 0;
@@ -33,7 +30,6 @@ let mouseY = 0;
 const drawingHistory = []; 
 let currentStroke = [];
 
-// 🎬 Handle swapping from start button to the game sandbox area
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
     gameScreen.classList.remove('hidden-game-element');  
@@ -43,13 +39,11 @@ startGameBtn.addEventListener('click', () => {
     }
 });
 
-// Open window action
 gameBtn.addEventListener('click', () => {
     miniWindow.classList.remove('hidden-window'); 
     miniWindow.style.display = 'block'; 
 });
 
-// 🔄 Consolidated close action
 closeWindowBtn.addEventListener('click', () => {
     miniWindow.classList.add('hidden-window'); 
     startScreen.classList.remove('hidden-game-element'); 
@@ -59,7 +53,6 @@ closeWindowBtn.addEventListener('click', () => {
     }
 });
 
-// 💾 SAVE FEATURE
 saveBtn.addEventListener('click', () => {
     if (drawingHistory.length === 0) {
         alert("Your canvas is completely blank! Draw something first.");
@@ -69,7 +62,6 @@ saveBtn.addEventListener('click', () => {
     alert("Art saved successfully to browser storage! 🎉");
 });
 
-// 📂 LOAD FEATURE
 loadBtn.addEventListener('click', () => {
     const savedData = localStorage.getItem('mySavedArt');
     if (!savedData) {
@@ -86,7 +78,6 @@ loadBtn.addEventListener('click', () => {
     alert("Art loaded smoothly! 🎨");
 });
 
-// draggable window code >>
 let isDraggingWindow = false;
 let startX, startY, initialWindowLeft, initialWindowTop;
 
@@ -116,7 +107,6 @@ window.addEventListener('mouseup', () => {
     }
 });
 
-// Stamp loading logic
 let stampImage = new Image();
 let isImageLoaded = false;
 stampImage.onload = () => { isImageLoaded = true; };
@@ -256,7 +246,6 @@ function draw(e) {
     ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
     ctx.stroke();
     
-    // Save points with distance limiter optimization
     const lastPoint = currentStroke[currentStroke.length - 1];
     if (!lastPoint || Math.abs(x - lastPoint.x) > 2 || Math.abs(y - lastPoint.y) > 2) {
         currentStroke.push({
@@ -292,7 +281,6 @@ function drawCustomShape(x, y) {
     ctx.restore();
 }
 
-// Shimeji Desktop Pet Class
 class Shimeji {
     constructor() {
         this.x = Math.random() * (window.innerWidth - 100);
@@ -414,7 +402,6 @@ function animationTick() {
 }
 requestAnimationFrame(animationTick);
 
-// Auto-Load Art on boot up
 window.addEventListener('DOMContentLoaded', () => {
     const savedData = localStorage.getItem('mySavedArt');
     if (savedData) {
