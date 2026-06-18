@@ -12,17 +12,39 @@ let charImgUrl = '';
 let isCharImageLoaded = false;
 const charLoader = document.getElementById('charLoader');
 const miniWindow = document.getElementById('miniWindow');
-const gameBtn = document.getElementById('gameBtn'); // 🔄 Updated variable and ID lookup
+const gameBtn = document.getElementById('gameBtn'); 
 const closeWindowBtn = document.getElementById('closeWindowBtn');
 const windowHeader = document.getElementById('windowHeader');
 
+// Grab the customizable game container handles
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const startGameBtn = document.getElementById('startGameBtn');
+
+// 🎬 Handle swapping from start button to the game sandbox area
+startGameBtn.addEventListener('click', () => {
+    startScreen.classList.add('hidden-game-element');     // Hides the start screen/button
+    gameScreen.classList.remove('hidden-game-element');  // Reveals your blank custom game screen
+    
+    console.log("Custom game module booted up successfully!");
+    initCustomGame(); // 🚀 Calls the initialization function inside game.js!
+});
+
+// Open window action
 gameBtn.addEventListener('click', () => {
     miniWindow.classList.remove('hidden-window'); // Reveals the window
     miniWindow.style.display = 'block'; 
 });
 
+// 🔄 Consolidated close action: Resets screens and stops the loops
 closeWindowBtn.addEventListener('click', () => {
-    miniWindow.classList.add('hidden-window'); // Hides the window
+    miniWindow.classList.add('hidden-window'); // 1 - Hides the window
+    startScreen.classList.remove('hidden-game-element'); // 2 - Puts the START button back
+    gameScreen.classList.add('hidden-game-element');    // 3 - Hides your custom game arena
+    
+    if (typeof stopCustomGame === 'function') {
+        stopCustomGame(); // 🛑 Calls the stop function inside game.js safely if it exists
+    }
 });
 
 // draggable window code >>
@@ -32,7 +54,6 @@ let startX, startY, initialWindowLeft, initialWindowTop;
 
 windowHeader.addEventListener('mousedown', (e) => {
     isDraggingWindow = true;
-    
     startX = e.clientX;
     startY = e.clientY;
     
@@ -132,7 +153,7 @@ const resetTracking = () => {
     canvas.lastX = null;
     canvas.lastY = null;
     canvas.lastMidX = null;
-    canvas.lastMidY = null;
+    canvas.lastY = null;
     ctx.beginPath();
 };
 
@@ -193,7 +214,6 @@ function draw(e) {
     canvas.lastMidY = midY;
 }
 
-// 3. Stamp file on 'S' keypress
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
         if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
@@ -206,28 +226,23 @@ function drawCustomShape(x, y) {
     if (!isImageLoaded) return; 
     
     ctx.save();
-    
-    // This pulls the slider size directly so your stamp scales with your brush slider!
     const dynamicSize = Number(brushSize.value) * 2.5; 
-    
     const targetX = x - (dynamicSize / 2);
     const targetY = y - (dynamicSize / 2);
     
     ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
-    
     ctx.restore();
 }
+
 class Shimeji {
     constructor() {
         this.x = Math.random() * (window.innerWidth - 100);
         this.y = -50; 
-        
         this.velocityY = 0; 
         this.velocityX = (Math.random() - 0.5) * 2; 
         this.gravity = 0.4;
         this.bounceFactor = -0.3; 
         this.isGrounded = false;
-
         this.state = 'falling'; 
         this.stateTimer = 0;
 
@@ -235,7 +250,6 @@ class Shimeji {
         this.element.src = charImgUrl;
         this.element.classList.add('shimeji-char');
         document.body.appendChild(this.element); 
-        
         this.updateElementPosition();
     }
 
@@ -259,7 +273,6 @@ class Shimeji {
     update() {
         const floorLevel = window.innerHeight - 100;
 
-        // 1: falling/airborne physics
         if (!this.isGrounded && this.state !== 'climbing') {
             this.velocityY += this.gravity;
             this.y += this.velocityY;
@@ -268,7 +281,6 @@ class Shimeji {
             if (this.y >= floorLevel) {
                 this.y = floorLevel;
                 this.velocityY = this.velocityY * this.bounceFactor; 
-                
                 if (Math.abs(this.velocityY) < 1) {
                     this.velocityY = 0;
                     this.isGrounded = true;
@@ -276,7 +288,6 @@ class Shimeji {
                 }
             }
         }
-        // 2: climbing walls
         else if (this.state === 'climbing') {
             this.y += this.velocityY; 
             this.stateTimer--;
@@ -288,7 +299,6 @@ class Shimeji {
                 this.element.style.transform = 'rotate(0deg)'; 
             }
         }
-        // 3: grounded animations (idle/walking)
         else {
             this.x += this.velocityX;
             this.stateTimer--;
@@ -299,14 +309,12 @@ class Shimeji {
     
             if (this.x <= 0 || this.x >= window.innerWidth - 100) {
                 this.x = this.x <= 0 ? 0 : window.innerWidth - 100;
-                
                 if (Math.random() > 0.5) {
                     this.state = 'climbing';
                     this.isGrounded = false;
                     this.velocityY = -1.5; 
                     this.velocityX = 0;
                     this.stateTimer = Math.floor(Math.random() * 150) + 100; 
-                    
                     this.element.style.transform = this.x <= 0 ? 'rotate(90deg)' : 'rotate(-90deg)';
                 } else {
                     this.velocityX *= -1; 
@@ -314,7 +322,6 @@ class Shimeji {
             }
         }
         
-        // 🛠️ FIX: These lines are now safely wrapped inside the update() function!
         if (this.x < 0) this.x = 0;
         if (this.x > window.innerWidth - 100) this.x = window.innerWidth - 100;
 
@@ -323,27 +330,25 @@ class Shimeji {
         }
 
         this.updateElementPosition();
-    } // 🔓 This curly bracket now correctly closes the update() function
+    }
 
     updateElementPosition() {
         this.element.style.left = `${this.x}px`;
         this.element.style.top = `${this.y}px`;
     }
 }
-clearBtn.addEventListener('click', () => {
-    // remove canvas drawings >>
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // remove characters >>
+clearBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
 });
+
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
-        alert("error - pls upload sprite"); // Optional alert message
+        alert("error - pls upload sprite"); 
         return; 
     }
-    
     characters.push(new Shimeji());
 });
 
