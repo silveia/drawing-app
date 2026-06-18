@@ -35,6 +35,8 @@
     box-sizing: border-box;
 }
 
+
+
 #canvas-container {
     position: relative;
     margin-top: 20px;
@@ -43,6 +45,7 @@
     max-width: 1200px; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
+
 .shimeji-char {
     position: fixed;
     width: 100px;
@@ -134,6 +137,7 @@ select {
     padding: 0;
     transition: transform 0.1s ease;
     border-radius: 0;
+    z-index: 3;
 }
 
 /* Style for the small image inside the button */
@@ -153,13 +157,21 @@ select {
     transform: scale(0.95); /* Shrinks slightly when clicked */
 }
 
-/* mini window */
+
+
+
+
+/*  ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐆𝐀𝐌𝐄 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
+
+
+
 
 #miniWindow {
     position: fixed;
     top: 30%;
     left: 40%;
-    width: 300px;
+    width: 400px;
+    height: 500px;
     background-color: #E7E3E5;
     border: 3px solid #49393F;
     z-index: 20; 
@@ -178,6 +190,10 @@ select {
     align-items: center;
     font-weight: bold;
     user-select: none; 
+    border: 3px solid #49393F;
+    border-top: none;
+    border-left: none;
+    border-right: none;
 }
 
 /* Window close button */
@@ -185,7 +201,7 @@ select {
     background-color: #775F6C;
     border: 1px solid white;
     border-radius: 0;
-    padding: 0px 6px;
+    padding: 0px 3px;
     font-size: 11px;
 }
 #closeWindowBtn:hover {
@@ -201,5 +217,26 @@ select {
 
 /* Add this to the very bottom of style.css */
 .hidden-window {
+    display: none !important;
+}
+
+/* Centers the start screen setup inside the menu */
+#startScreen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px; /* Gives the window content initial vertical breathing room */
+}
+
+/* custom Start Button */
+#startGameBtn {
+    padding: 15px 35px;
+    font-size: 20px;
+    letter-spacing: 1px;
+    border: 2px solid #49393F;
+}
+
+/* Utility rule to hide layout screens on demand */
+.hidden-game-element {
     display: none !important;
 }
