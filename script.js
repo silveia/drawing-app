@@ -118,24 +118,48 @@ charLoader.addEventListener('change', (e) => {
     }
 });
 
+
+// resize canvas >>
+
 function resizeCanvas() {
+    // 1. Create a temporary canvas to cache the current drawing state
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
     tempCanvas.width = canvas.width;
     tempCanvas.height = canvas.height;
+    
+    // Turn off smoothing on the temporary cache canvas
+    tempCtx.imageSmoothingEnabled = false;
     tempCtx.drawImage(canvas, 0, 0);
 
+    // 2. Calculate pixel ratio scale factor
     const scale = window.devicePixelRatio || 1; 
 
+    // 3. Resize the main canvas dimensions
     canvas.width = canvas.clientWidth * scale;
     canvas.height = canvas.clientHeight * scale;
 
+    // 4. Reset the context matrix and scale it
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Completely flushes the old matrix scale
     ctx.scale(scale, scale);
 
+    // 5. CRITICAL: Force the browser to turn off smoothing on the newly resized board
+    if (currentTool === 'square') {
+        ctx.imageSmoothingEnabled = false; 
+    } else {
+        // Change this to false if you want your round brush to stay 100% pixelated too!
+        ctx.imageSmoothingEnabled = true; 
+    }
+
+    // 6. Restore the previous drawing back onto the crisp, new resolution board
     ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.clientWidth, canvas.clientHeight);
 }
 
 resizeCanvas();
+
+
+
+
 window.addEventListener('resize', resizeCanvas);
 
 brushType.addEventListener('change', () => {
@@ -357,3 +381,59 @@ function animationTick() {
     requestAnimationFrame(animationTick);
 }
 requestAnimationFrame(animationTick);
+
+
+// save/load code >>
+
+const saveBtn = document.getElementById('saveBtn');
+const loadBtn = document.getElementById('loadBtn');
+
+// 💾 1. THE SAVE FEATURE
+saveBtn.addEventListener('click', () => {
+    if (drawingHistory.length === 0) {
+        alert("Your canvas is completely blank! Draw something first.");
+        return;
+    }
+    
+    // Turn the drawingHistory array into a text string and save it to the browser memory
+    localStorage.setItem('mySavedArt', JSON.stringify(drawingHistory));
+    
+    alert("Art saved successfully to browser storage! 🎉");
+});
+
+// 📂 2. THE LOAD FEATURE
+loadBtn.addEventListener('click', () => {
+    // Look up our saved data string in the browser memory
+    const savedData = localStorage.getItem('mySavedArt');
+    
+    if (!savedData) {
+        
+        // no art found alert
+
+        return;
+    }
+    
+    // Clear the current board and current history array first
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    drawingHistory.length = 0; 
+    
+    // Convert the text string back into structural arrays and push them into history
+    const parsedHistory = JSON.parse(savedData);
+    parsedHistory.forEach(stroke => drawingHistory.push(stroke));
+    
+    // Fire your existing layout engine to cleanly redraw the shapes smoothly!
+    redrawAllStrokes();
+    
+    // art loaded alert
+
+});
+
+// Automatically checks for saves when the page first boots up
+window.addEventListener('DOMContentLoaded', () => {
+    const savedData = localStorage.getItem('mySavedArt');
+    if (savedData) {
+        const parsedHistory = JSON.parse(savedData);
+        parsedHistory.forEach(stroke => drawingHistory.push(stroke));
+        redrawAllStrokes();
+    }
+});
