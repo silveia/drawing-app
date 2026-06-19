@@ -227,8 +227,10 @@ function redrawAllStrokes() {
         ctx.lineCap = stroke[0].tool === 'square' ? 'square' : 'round';
         ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
 
+        ctx.beginPath();
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+
         if (stroke.length === 1) {
-            ctx.beginPath();
             if (stroke[0].tool === 'square') {
                 const size = stroke[0].size;
                 ctx.fillRect(stroke[0].x - size / 2, stroke[0].y - size / 2, size, size);
@@ -236,25 +238,12 @@ function redrawAllStrokes() {
                 ctx.arc(stroke[0].x, stroke[0].y, stroke[0].size / 2, 0, Math.PI * 2);
                 ctx.fill();
             }
-            return;
+        } else {
+            for (let i = 1; i < stroke.length; i++) {
+                ctx.lineTo(stroke[i].x, stroke[i].y);
+            }
+            ctx.stroke();
         }
-
-        ctx.beginPath();
-        ctx.moveTo(stroke[0].x, stroke[0].y);
-
-        for (let i = 1; i < stroke.length - 1; i++) {
-            const midX = (stroke[i].x + stroke[i + 1].x) / 2;
-            const midY = (stroke[i].y + stroke[i + 1].y) / 2;
-            ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
-        }
-        
-        ctx.quadraticCurveTo(
-            stroke[stroke.length - 1].x,
-            stroke[stroke.length - 1].y,
-            stroke[stroke.length - 1].x,
-            stroke[stroke.length - 1].y
-        );
-        ctx.stroke();
     });
 
     ctx.globalCompositeOperation = 'source-over';
@@ -268,19 +257,16 @@ brushType.addEventListener('change', () => {
 });
 
 const resetTracking = () => {
-    isDrawing = false;
-    canvas.lastX = null;
-    canvas.lastY = null;
-    canvas.lastMidX = null;
-    canvas.lastMidY = null;
-    ctx.beginPath();
-    ctx.globalCompositeOperation = 'source-over';
-
-    if (currentStroke.length > 0) {
+    if (isDrawing && currentStroke.length > 0) {
         drawingHistory.push([...currentStroke]);
         currentStroke = []; 
         redoStack.length = 0; 
     }
+    isDrawing = false;
+    canvas.lastX = null;
+    canvas.lastY = null;
+    ctx.beginPath();
+    ctx.globalCompositeOperation = 'source-over';
 };
 
 canvas.addEventListener('mousedown', (e) => {
@@ -290,6 +276,9 @@ canvas.addEventListener('mousedown', (e) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    canvas.lastX = x;
+    canvas.lastY = y;
+
     currentStroke.push({
         x: x,
         y: y,
@@ -298,7 +287,26 @@ canvas.addEventListener('mousedown', (e) => {
         tool: currentTool
     });
     
-    draw(e);
+    ctx.beginPath();
+    if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+    } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = colorPicker.value;
+        ctx.fillStyle = colorPicker.value;
+    }
+    ctx.lineWidth = brushSize.value;
+    ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
+    ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
+
+    if (currentTool === 'square') {
+        ctx.fillRect(x - brushSize.value / 2, y - brushSize.value / 2, brushSize.value, brushSize.value);
+    } else {
+        ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
 });
 
 window.addEventListener('mouseup', resetTracking);
@@ -311,7 +319,7 @@ function draw(e) {
     mouseX = x;
     mouseY = y;
 
-    if (!isDrawing) return;        
+    if (!isDrawing || canvas.lastX === null) return;        
     
     if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -322,46 +330,24 @@ function draw(e) {
     }
 
     ctx.lineWidth = brushSize.value;
-    
-    if (currentTool === 'square') {
-        ctx.lineCap = 'square';
-        ctx.lineJoin = 'miter';
-    } else {
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-    }
-    ctx.imageSmoothingEnabled = true;
-
-    if (!canvas.lastX) {
-        canvas.lastX = x;
-        canvas.lastY = y;
-        canvas.lastMidX = x;
-        canvas.lastMidY = y;
-    }
-
-    const midX = (canvas.lastX + x) / 2;
-    const midY = (canvas.lastY + y) / 2;
+    ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
+    ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
 
     ctx.beginPath();
-    ctx.moveTo(canvas.lastMidX, canvas.lastMidY);
-    ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
+    ctx.moveTo(canvas.lastX, canvas.lastY);
+    ctx.lineTo(x, y);
     ctx.stroke();
     
-    const lastPoint = currentStroke[currentStroke.length - 1];
-    if (!lastPoint || lastPoint.x !== x || lastPoint.y !== y) {
-        currentStroke.push({
-            x: x,
-            y: y,
-            color: currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value,
-            size: brushSize.value,
-            tool: currentTool
-        });
-    }
+    currentStroke.push({
+        x: x,
+        y: y,
+        color: currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value,
+        size: brushSize.value,
+        tool: currentTool
+    });
     
     canvas.lastX = x;
     canvas.lastY = y;
-    canvas.lastMidX = midX;
-    canvas.lastMidY = midY;
 }
 
 window.addEventListener('mousemove', draw);
