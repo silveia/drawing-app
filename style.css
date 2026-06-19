@@ -55,7 +55,7 @@ label {
     gap: 5px;
 }
 
-button, .file-upload-btn, select, option {
+button, .uploadBtn, select, option {
     padding: 5px 15px;
     cursor: pointer;
     background-color: #775F6C;
@@ -67,7 +67,7 @@ button, .file-upload-btn, select, option {
     font-family: inherit;
 }
 
-button:hover, .file-upload-btn:hover, #clearBtn:hover {
+button:hover, .uploadBtn:hover, #clearBtn:hover {
     background-color: #624D5A;
 }
 
@@ -86,15 +86,11 @@ select {
 /* ==========================================================================
    3. COLOR PICKER CUSTOMIZATION
    ========================================================================== */
-   
-/* ==========================================================================
-   3. COLOR PICKER CUSTOMIZATION
-   ========================================================================== */
 #colorPicker {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    width: 20px;             /* 🛠️ Slightly adjusted sizing */
+    width: 20px;             
     height: 20px;            
     background-color: transparent;
     cursor: pointer;
@@ -105,9 +101,8 @@ select {
     border-radius: 50%;    
     overflow: hidden;                       
     
-    /* 🎯 THE OVERRIDE: Moves the white border to the true outer edge */
     border: 2px solid white; 
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.1); /* Adds a crisp sub-pixel shadow to mask aliasing bugs */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1); 
 }
 
 #colorPicker::-webkit-color-swatch-wrapper {
@@ -117,9 +112,9 @@ select {
 }
     
 #colorPicker::-webkit-color-swatch {
-    border: none;            /* 🛠️ Strips out the browser's buggy internal borders */
-    border-radius: 0;        /* Let it fill the outer circle cleanly */
-    transform: scale(1.1);   /* Slightly over-scales the color fill to completely hide square edges */
+    border: none;            
+    border-radius: 0;        
+    transform: scale(1.1);   
 }
 
 #colorPicker::-moz-color-swatch {
@@ -129,7 +124,7 @@ select {
 }
 
 /* ==========================================================================
-   4. FLOATING SCREEN SHORTCUT BUTTONS
+   4. FLOATING SCREEN SHORTCUT BUTTONS & IN-WINDOW ACTIONS
    ========================================================================== */
 #gameBtn, #browserBtn {
     position: fixed;      
@@ -165,6 +160,37 @@ select {
     transform: scale(0.95); 
 }
 
+/* 🆕 Custom Square Reference Upload Button */
+#uploadBtn {
+    width: 44px;          
+    height: 44px;         
+    background-color: #775F6C; 
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 0px; 
+    transition: transform 0.1s ease;
+}
+
+#uploadIcon {
+    width: 60%;           
+    height: 60%;
+    object-fit: contain;  
+    image-rendering: pixelated; 
+}
+
+#uploadBtn:hover {
+    background-color: #624D5A;
+    transform: scale(1.05);
+}
+
+#uploadBtn:active {
+    transform: scale(0.95);
+}
+
 
 
 /* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐆𝐀𝐌𝐄 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
@@ -173,8 +199,8 @@ select {
 
 #miniWindow {
     position: fixed;
-    top: 30%;
-    left: 40%;
+    top: 10%;
+    left: 10%;
     width: 400px;
     height: 500px;
     background-color: #E7E3E5;
@@ -243,12 +269,22 @@ select {
     top: 30%;
     left: 40%;
     width: 400px;
-    height: 500px;
+    height: 400px;
     background-color: #E7E3E5;
     border: 3px solid #49393F;
     z-index: 20; 
     display: none; 
     box-sizing: border-box;
+    
+    /* 📐 Enable native browser resizing */
+    resize: both;
+    overflow: hidden; 
+    
+    /* Optional: Set constraints so the user can't shrink it to nothing */
+    min-width: 200px;
+    min-height: 200px;
+    max-width: 90vw;
+    max-height: 90vh;
 }
 
 #windowHeader2 {
@@ -279,11 +315,52 @@ select {
     background-color: #A04650; 
 }
 
-#windowContent2 {
-    padding: 15px;
-    color: #49393F;
-    font-size: 14px;
+.windowContent2 {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 35px); /* This forces it to stretch perfectly with the new container size */
+    box-sizing: border-box;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
+
+/* Forces the preview image to cover the full window space nicely */
+#windowImagePreview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Change to 'contain' if you don't want the image cropped */
+    display: none;
+}
+
+/* Center placeholder text if no image is uploaded */
+#uploadPlaceholder {
+    color: #775F6C;
+    font-size: 12px;
+    font-family: monospace;
+    position: absolute;
+    pointer-events: none;
+}
+
+/* Floats the custom square button in the top-right corner over everything */
+#uploadBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10; /* Ensures it stays visible on top of your loaded photo */
+    width: 44px;          
+    height: 44px;         
+    background-color: rgba(119, 95, 108, 0.85); /* Slightly transparent so it looks sleek */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
 
 /* ==========================================================================
    5. ENVIRONMENT EXTRAS
