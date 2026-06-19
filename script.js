@@ -533,7 +533,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================================================
-// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY (RENAME-PROTECTED)
+// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY 
 // ==========================================================================
 
 const refWindowBtn = document.getElementById('uploadBtn');
