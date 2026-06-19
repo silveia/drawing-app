@@ -1,3 +1,91 @@
+/* ==========================================================================
+   1. GLOBAL STYLES & LAYOUT
+   ========================================================================== */
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #E7E3E5;
+    font-family: 'Pixelify Sans', sans-serif;
+}
+
+#canvas-container {
+    position: relative;
+    margin-top: 20px;
+    width: 100vw; 
+    height: 88vh; 
+    max-width: 1200px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+canvas {
+    background-color: white;
+    cursor: crosshair;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ==========================================================================
+   2. TOOLBAR & UI CONTROLS
+   ========================================================================== */
+#toolbar {
+    background-color: #49393F;
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+
+label {
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+button, .file-upload-btn, select, option {
+    padding: 5px 15px;
+    cursor: pointer;
+    background-color: #775F6C;
+    color: white;
+    border: none;
+    border-radius: 0px;
+    font-weight: bold;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+button:hover, .file-upload-btn:hover, #clearBtn:hover {
+    background-color: #624D5A;
+}
+
+#imageLoader {
+    display: none;
+}
+
+#brushSize {
+    accent-color: #775F6C;
+}
+
+select {
+    padding-right: 25px; 
+}
+
+/* ==========================================================================
+   3. COLOR PICKER CUSTOMIZATION
+   ========================================================================== */
 #colorPicker {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -12,124 +100,31 @@
     box-sizing: border-box;
     display: inline-block; 
     overflow: hidden;     
-    border-radius: 50%;    /* Perfect circle clip for the outer edge */
+    border-radius: 50%;    
 }
 
-    /* 🛠️ THE FIX: Force the internal wrapper to be transparent and round */
- #colorPicker::-webkit-color-swatch-wrapper {
+#colorPicker::-webkit-color-swatch-wrapper {
     padding: 0;
     border-radius: 50%;
     background: transparent;
 }
     
-    /* Force the internal browser color swatch to look like a circle */
-#colorPicker::-webkit-color-swatch {
+#colorPicker::-webkit-color-swatch,
+#colorPicker::-moz-color-swatch {
      border-radius: 50%;
      border: 2px solid white;
      box-sizing: border-box;
 }
 
-#colorPicker::-moz-color-swatch {
-    border-radius: 50%;
-    border: 2px solid white;
-    box-sizing: border-box;
-}
-
-
-
-#canvas-container {
-    position: relative;
-    margin-top: 20px;
-    width: 100vw; 
-    height: 88vh; 
-    max-width: 1200px; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.shimeji-char {
-    position: fixed;
-    width: 100px;
-    height: 100px;
-    pointer-events: none; 
-    user-select: none;
-    z-index: 5;
-}
-body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #E7E3E5;
-    font-family: 'Pixelify Sans', sans-serif;
-}
-#toolbar {
-    background-color: #49393F;
-    width: 100%;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    box-sizing: border-box;
-}
-.toolbar-group {
-    display: flex;
-    align-items: center;
-    gap: 15px; 
-}
-label {
-    color: white;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-canvas {
-    background-color: white;
-    cursor: crosshair;
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-button, .file-upload-btn, select, option {
-    padding: 5px 15px;
-    cursor: pointer;
-    background-color: #775F6C;
-    color: white;
-    border: none;
-    border-radius: 0px;
-    font-weight: bold;
-    font-size: 14px;
-    font-family: inherit;
-}
-button:hover, .file-upload-btn:hover {
-    background-color: #624D5A;
-}
-#clearBtn {
-    background-color: #775F6C;
-}
-#clearBtn:hover {
-    background-color: #624D5A;
-}
-#imageLoader {
-    display: none;
-}
-#brushSize{
-    accent-color: #775F6C;
-}
-select {
-    padding-right: 25px; 
-}
-
-/* game button */
-
-#gameBtn {
-    position: fixed;      /* 📌 Locks the button to the screen layout */
-    bottom: 20px;         /* 📏 20px away from the bottom edge */
-    right: 20px;          /* 📏 20px away from the right edge */
-    width: 44px;          /* 📐 Button width */
-    height: 44px;         /* 📐 Button height */
-    background-color: #775F6C; /* Matches your toolbar theme */
+/* ==========================================================================
+   4. FLOATING SCREEN SHORTCUT BUTTONS
+   ========================================================================== */
+#gameBtn, #browserBtn {
+    position: fixed;      
+    right: 30px;          
+    width: 44px;          
+    height: 44px;         
+    background-color: #775F6C; 
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -140,29 +135,27 @@ select {
     z-index: 3;
 }
 
-/* Style for the small image inside the button */
-#gameIcon {
-    width: 70%;           /* Scales image cleanly inside the button square */
+#gameBtn { bottom: 30px; }
+#browserBtn { bottom: 90px; }
+
+#gameIcon, #browserIcon {
+    width: 70%;           
     height: 70%;
-    object-fit: contain;  /* Prevents your image from stretching weirdly */
-    image-rendering: pixelated; /* Keeps pixel art looking sharp! */
+    object-fit: contain;  
+    image-rendering: pixelated; 
 }
 
-/* Hover effects */
-#gameBtn:hover {
-    transform: scale(1.05); /* Slightly pops out when hovered */
+#gameBtn:hover, #browserBtn:hover {
+    transform: scale(1.05); 
 }
 
-#gameBtn:active {
-    transform: scale(0.95); /* Shrinks slightly when clicked */
+#gameBtn:active, #browserBtn:active {
+    transform: scale(0.95); 
 }
 
 
 
-
-
-/*  ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐆𝐀𝐌𝐄 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
-
+/* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐆𝐀𝐌𝐄 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
 
 
 
@@ -179,7 +172,6 @@ select {
     box-sizing: border-box;
 }
 
-/* Header bar used to drag the window around */
 #windowHeader {
     padding: 6px 10px;
     cursor: move; 
@@ -196,7 +188,6 @@ select {
     border-right: none;
 }
 
-/* Window close button */
 #closeWindowBtn {
     background-color: #775F6C;
     border: 1px solid white;
@@ -204,39 +195,97 @@ select {
     padding: 0px 3px;
     font-size: 11px;
 }
+
 #closeWindowBtn:hover {
     background-color: #A04650; 
 }
 
-/* Internal padding for window content */
 #windowContent {
     padding: 15px;
     color: #49393F;
     font-size: 14px;
 }
 
-/* Add this to the very bottom of style.css */
-.hidden-window {
-    display: none !important;
-}
-
-/* Centers the start screen setup inside the menu */
 #startScreen {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 400px; /* Gives the window content initial vertical breathing room */
+    height: 400px; 
 }
 
-/* custom Start Button */
 #startGameBtn {
     padding: 15px 35px;
     font-size: 20px;
     letter-spacing: 1px;
-    border: 2px solid #49393F;
+    border: none;
 }
 
-/* Utility rule to hide layout screens on demand */
-.hidden-game-element {
+
+
+/* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐁𝐑𝐎𝐖𝐒𝐄𝐑 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
+
+
+
+#miniWindow2 {
+    position: fixed;
+    top: 30%;
+    left: 40%;
+    width: 400px;
+    height: 500px;
+    background-color: #E7E3E5;
+    border: 3px solid #49393F;
+    z-index: 20; 
+    display: none; 
+    box-sizing: border-box;
+}
+
+#windowHeader2 {
+    padding: 6px 10px;
+    cursor: move; 
+    background-color: #49393F;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    user-select: none; 
+    border: 3px solid #49393F;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+#closeWindowBtn2 {
+    background-color: #775F6C;
+    border: 1px solid white;
+    border-radius: 0;
+    padding: 0px 3px;
+    font-size: 11px;
+}
+
+#closeWindowBtn2:hover {
+    background-color: #A04650; 
+}
+
+#windowContent2 {
+    padding: 15px;
+    color: #49393F;
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   5. ENVIRONMENT EXTRAS
+   ========================================================================== */
+.shimeji-char {
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    pointer-events: none; 
+    user-select: none;
+    z-index: 5;
+}
+
+/* Utility Visibility Rules */
+.hidden-window, .hidden-game-element {
     display: none !important;
 }
