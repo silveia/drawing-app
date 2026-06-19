@@ -177,7 +177,6 @@ select {
     border: none !important;
     outline: none;
     border-radius: 0px; 
-    transition: transform 0.1s ease;
 }
 
 #uploadIcon {
@@ -189,11 +188,6 @@ select {
 
 #uploadBtn:hover {
     background-color: transparent !important;
-    transform: scale(1.15);
-}
-
-#uploadBtn:active {
-    transform: scale(0.90);
 }
 
 
