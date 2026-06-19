@@ -18,9 +18,9 @@ const miniWindow2 = document.getElementById('miniWindow2');
 const gameBtn = document.getElementById('gameBtn'); 
 const browserBtn = document.getElementById('browserBtn'); 
 const closeWindowBtn = document.getElementById('closeWindowBtn');
-const closeWindowBtn2 = document.getElementById('closeWindowBtn2'); // 🆕 Added close button for window 2
+const closeWindowBtn2 = document.getElementById('closeWindowBtn2'); 
 const windowHeader = document.getElementById('windowHeader');
-const windowHeader2 = document.getElementById('windowHeader2'); // 🆕 Added header for window 2
+const windowHeader2 = document.getElementById('windowHeader2'); 
 
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
@@ -51,11 +51,15 @@ startGameBtn.addEventListener('click', () => {
 gameBtn.addEventListener('click', () => {
     miniWindow.classList.remove('hidden-window'); 
     miniWindow.style.display = 'block'; 
+    miniWindow.style.zIndex = '100';
+    miniWindow2.style.zIndex = '99';
 });
 
 browserBtn.addEventListener('click', () => {
     miniWindow2.classList.remove('hidden-window');
     miniWindow2.style.display = 'block';
+    miniWindow2.style.zIndex = '100';
+    miniWindow.style.zIndex = '99';
 });
 
 closeWindowBtn.addEventListener('click', () => {
@@ -67,7 +71,6 @@ closeWindowBtn.addEventListener('click', () => {
     }
 });
 
-// 🆕 Close action for the second window
 closeWindowBtn2.addEventListener('click', () => {
     miniWindow2.classList.add('hidden-window');
     miniWindow2.style.display = 'none';
@@ -75,6 +78,7 @@ closeWindowBtn2.addEventListener('click', () => {
 
 saveBtn.addEventListener('click', () => {
     if (drawingHistory.length === 0) {
+        alert("Your canvas is completely blank! Draw something first.");
         return;
     }
     localStorage.setItem('mySavedArt', JSON.stringify(drawingHistory));
@@ -95,6 +99,17 @@ loadBtn.addEventListener('click', () => {
     redrawAllStrokes();
 });
 
+// 🎯 CLICK-ANYWHERE WINDOW FOCUS LOGIC
+miniWindow.addEventListener('mousedown', () => {
+    miniWindow.style.zIndex = '100';
+    miniWindow2.style.zIndex = '99';
+});
+
+miniWindow2.addEventListener('mousedown', () => {
+    miniWindow2.style.zIndex = '100';
+    miniWindow.style.zIndex = '99';
+});
+
 // 🛠️ DRAG LOGIC FOR WINDOW 1
 let isDraggingWindow = false;
 let startX, startY, initialWindowLeft, initialWindowTop;
@@ -108,9 +123,12 @@ windowHeader.addEventListener('mousedown', (e) => {
     initialWindowLeft = rect.left;
     initialWindowTop = rect.top;
     windowHeader.style.backgroundColor = '#624D5A'; 
+
+    miniWindow.style.zIndex = '100';
+    miniWindow2.style.zIndex = '99';
 });
 
-// 🆕 DRAG LOGIC FOR WINDOW 2
+// 🛠️ DRAG LOGIC FOR WINDOW 2
 let isDraggingWindow2 = false;
 let startX2, startY2, initialWindowLeft2, initialWindowTop2;
 
@@ -123,6 +141,9 @@ windowHeader2.addEventListener('mousedown', (e) => {
     initialWindowLeft2 = rect.left;
     initialWindowTop2 = rect.top;
     windowHeader2.style.backgroundColor = '#624D5A'; 
+
+    miniWindow.style.zIndex = '99';
+    miniWindow2.style.zIndex = '100';
 });
 
 window.addEventListener('mousemove', (e) => {
@@ -134,7 +155,7 @@ window.addEventListener('mousemove', (e) => {
         miniWindow.style.top = `${initialWindowTop + deltaY}px`;
     }
     
-    // 🆕 Handle Window 2 Drag
+    // Handle Window 2 Drag
     if (isDraggingWindow2) {
         const deltaX = e.clientX - startX2;
         const deltaY = e.clientY - startY2;
@@ -481,5 +502,32 @@ window.addEventListener('DOMContentLoaded', () => {
         const parsedHistory = JSON.parse(savedData);
         parsedHistory.forEach(stroke => drawingHistory.push(stroke));
         redrawAllStrokes();
+    }
+});
+
+// ==========================================================================
+// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY
+// ==========================================================================
+
+// 1. Forward the custom square button click directly into the file input field
+uploadBtn.addEventListener('click', () => {
+    windowImageLoader.click();
+});
+
+// 2. Read the selected image and generate the file URL stream
+windowImageLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+            windowImagePreview.src = event.target.result;
+            
+            // Swap display states to uncover the loaded canvas picture
+            windowImagePreview.style.display = 'block';
+            uploadPlaceholder.style.display = 'none';
+        };
+        
+        reader.readAsDataURL(file);
     }
 });
