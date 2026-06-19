@@ -75,7 +75,6 @@ closeWindowBtn2.addEventListener('click', () => {
 
 saveBtn.addEventListener('click', () => {
     if (drawingHistory.length === 0) {
-        alert("Your canvas is completely blank! Draw something first.");
         return;
     }
     localStorage.setItem('mySavedArt', JSON.stringify(drawingHistory));
