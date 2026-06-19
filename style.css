@@ -67,7 +67,7 @@ button, .uploadBtn, select, option {
     font-family: inherit;
 }
 
-button:hover, .uploadBtn:hover, #clearBtn:hover {
+button:hover, #clearBtn:hover {
     background-color: #624D5A;
 }
 
@@ -183,7 +183,6 @@ select {
 }
 
 #uploadBtn:hover {
-    background-color: #624D5A;
     transform: scale(1.05);
 }
 
