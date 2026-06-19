@@ -74,27 +74,34 @@ closeWindowBtn2.addEventListener('click', () => {
     miniWindow2.style.display = 'none';
 });
 
+// ==========================================================================
+// 💾 PIXEL-PERFECT SAVE/LOAD ENGINE (MATCHES PROFESSIONAL SOFTWARE)
+// ==========================================================================
+
 saveBtn.addEventListener('click', () => {
-    if (drawingHistory.length === 0) {
-        alert("Your canvas is completely blank! Draw something first.");
-        return;
-    }
-    localStorage.setItem('mySavedArt', JSON.stringify(drawingHistory));
+    // Converts the canvas pixels directly into an unchangeable image data string
+    const canvasDataUrl = canvas.toDataURL();
+    localStorage.setItem('mySavedArt', canvasDataUrl);
+    alert("Artwork saved successfully!");
 });
 
 loadBtn.addEventListener('click', () => {
-    const savedData = localStorage.getItem('mySavedArt');
-    if (!savedData) {
+    const savedDataUrl = localStorage.getItem('mySavedArt');
+    if (!savedDataUrl) {
         alert("No saved artwork found on this browser!");
         return;
     }
+    
+    // Clear everything and clear history states
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     drawingHistory.length = 0; 
     
-    const parsedHistory = JSON.parse(savedData);
-    parsedHistory.forEach(stroke => drawingHistory.push(stroke));
-    
-    redrawAllStrokes();
+    // Load the image directly onto the canvas context back exactly as it was
+    const img = new Image();
+    img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+    };
+    img.src = savedDataUrl;
 });
 
 miniWindow.addEventListener('mousedown', () => {
@@ -203,56 +210,15 @@ function resizeCanvas() {
     ctx.scale(scale, scale);
     ctx.imageSmoothingEnabled = true;
 
-    redrawAllStrokes();
-}
-
-function redrawAllStrokes() {
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight); 
-
-    drawingHistory.forEach(stroke => {
-        if (stroke.length === 0) return;
-
-        if (stroke[0].tool === 'eraser') {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.strokeStyle = 'rgba(0,0,0,1)';
-            ctx.fillStyle = 'rgba(0,0,0,1)';
-        } else {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = stroke[0].color;
-            ctx.fillStyle = stroke[0].color;
-        }
-
-        ctx.lineWidth = stroke[0].size;
-        ctx.lineCap = stroke[0].tool === 'square' ? 'square' : 'round';
-        ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
-
-        ctx.beginPath();
-
-        if (stroke.length === 1) {
-            if (stroke[0].tool === 'square') {
-                const size = stroke[0].size;
-                ctx.fillRect(stroke[0].x - size / 2, stroke[0].y - size / 2, size, size);
-            } else {
-                ctx.arc(stroke[0].x, stroke[0].y, stroke[0].size / 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        } else if (stroke.length === 2) {
-            ctx.moveTo(stroke[0].x, stroke[0].y);
-            ctx.lineTo(stroke[1].x, stroke[1].y);
-            ctx.stroke();
-        } else {
-            ctx.moveTo(stroke[0].x, stroke[0].y);
-            for (let i = 1; i < stroke.length - 1; i++) {
-                const midX = (stroke[i].x + stroke[i + 1].x) / 2;
-                const midY = (stroke[i].y + stroke[i + 1].y) / 2;
-                ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
-            }
-            ctx.lineTo(stroke[stroke.length - 1].x, stroke[stroke.length - 1].y);
-            ctx.stroke();
-        }
-    });
-
-    ctx.globalCompositeOperation = 'source-over';
+    // Redraw using stored image string if available
+    const savedDataUrl = localStorage.getItem('mySavedArt');
+    if (savedDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        };
+        img.src = savedDataUrl;
+    }
 }
 
 resizeCanvas();
@@ -378,24 +344,6 @@ window.addEventListener('keydown', (e) => {
             drawCustomShape(mouseX, mouseY);
         }
     }
-
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault(); 
-        if (drawingHistory.length > 0) {
-            const undoneStroke = drawingHistory.pop();
-            redoStack.push(undoneStroke);
-            redrawAllStrokes();
-        }
-    }
-
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-        e.preventDefault(); 
-        if (redoStack.length > 0) {
-            const redoneStroke = redoStack.pop();
-            drawingHistory.push(redoneStroke);
-            redrawAllStrokes();
-        }
-    }
 });
 
 function drawCustomShape(x, y) {
@@ -513,6 +461,7 @@ clearBtn.addEventListener('click', () => {
     characters.forEach(char => char.element.remove());
     characters.length = 0;
     drawingHistory.length = 0; 
+    localStorage.removeItem('mySavedArt');
 });
 
 spawnBtn.addEventListener('click', () => {
@@ -530,11 +479,13 @@ function animationTick() {
 requestAnimationFrame(animationTick);
 
 window.addEventListener('DOMContentLoaded', () => {
-    const savedData = localStorage.getItem('mySavedArt');
-    if (savedData) {
-        const parsedHistory = JSON.parse(savedData);
-        parsedHistory.forEach(stroke => drawingHistory.push(stroke));
-        redrawAllStrokes();
+    const savedDataUrl = localStorage.getItem('mySavedArt');
+    if (savedDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        };
+        img.src = savedDataUrl;
     }
 });
 
