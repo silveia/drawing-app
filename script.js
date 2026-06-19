@@ -461,7 +461,7 @@ clearBtn.addEventListener('click', () => {
     characters.forEach(char => char.element.remove());
     characters.length = 0;
     drawingHistory.length = 0; 
-    localStorage.removeItem('mySavedArt');
+    // Removed the localStorage deletion so your saves stay safe!
 });
 
 spawnBtn.addEventListener('click', () => {
