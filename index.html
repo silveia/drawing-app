@@ -13,28 +13,32 @@
         <div class="toolbar-group">
             <label for="brushType">tool</label>
             <select id="brushType">
-                <option value="round">round brush </option>
-                <option value="square">square bruh</option>
+                <option value="round">round brush</option>
+                <option value="square">square brush</option>
                 <option value="eraser">eraser</option>
             </select>
     
-            <label>color    <input type="color" id="colorPicker" value="#000000"></label>
-            <label>size   <input type="range" id="brushSize" min="1" max="50" value="5"></label>
+            <label>color <input type="color" id="colorPicker" value="#000000"></label>
+            <label>size <input type="range" id="brushSize" min="1" max="50" value="5"></label>
         </div>
     
         <div class="toolbar-group">
             <label class="file-upload-btn" for="imageLoader">upload stamp [shift]</label>
             <input type="file" id="imageLoader" accept="image/*">
     
-            <label class="file-upload-btn" for="charLoader">upload sprite </label>
+            <label class="file-upload-btn" for="charLoader">upload sprite</label>
             <input type="file" id="charLoader" accept="image/*" style="display: none;">
             
             <button id="spawnBtn">spawn sprite</button>
             <button id="saveBtn">save</button>
             <button id="loadBtn">load</button>
             <button id="clearBtn">clear</button>
-            <button id="gameBtn" aria-label="Custom Action">
+            
+            <button id="gameBtn" aria-label="Open Game Window">
                 <img src="image.png" alt="icon" id="gameIcon">
+            </button>
+            <button id="browserBtn" aria-label="Open Browser Window">
+                <img src="image-2.png" alt="icon" id="browserIcon">
             </button>
         </div>
     </div>
@@ -63,6 +67,17 @@
                 </div>
             </div>
         </div> 
+    </div>
+
+    <div id="miniWindow2" class="hidden-window" style="display: none; position: absolute; width: 400px; height: 300px;">
+        <div id="windowHeader2" style="background-color: #49393F; padding: 5px; cursor: move;">
+            <span>browser</span>
+            <button id="closeWindowBtn2">X</button>
+        </div>
+        
+        <div class="windowContent2" style="padding: 15px; text-align: center;">
+            <p>newjeans never die</p>
+        </div>
     </div>
 
     <script src="game.js"></script>   
