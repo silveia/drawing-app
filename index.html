@@ -23,10 +23,10 @@
         </div>
     
         <div class="toolbar-group">
-            <label class="file-upload-btn" for="imageLoader">upload stamp [shift]</label>
+            <label class="uploadBtn" for="imageLoader">upload stamp [shift]</label>
             <input type="file" id="imageLoader" accept="image/*">
     
-            <label class="file-upload-btn" for="charLoader">upload sprite</label>
+            <label class="uploadBtn" for="charLoader">upload sprite</label>
             <input type="file" id="charLoader" accept="image/*" style="display: none;">
             
             <button id="spawnBtn">spawn sprite</button>
@@ -44,7 +44,7 @@
     </div>
 
     <div id="canvas-container">
-        <canvas id="paintCanvas"></canvas>
+        <canvas id="paintCanvas" width="1200" height="800"></canvas>
     </div>
 
     <div id="miniWindow" class="hidden-window">
@@ -69,17 +69,29 @@
         </div> 
     </div>
 
-    <div id="miniWindow2" class="hidden-window" style="display: none; position: absolute; width: 400px; height: 300px;">
+    <div id="miniWindow2" class="hidden-window" style="display: none; position: fixed; width: 400px; height: 400px;">
         <div id="windowHeader2" style="background-color: #49393F; padding: 5px; cursor: move;">
-            <span>browser</span>
+            <span>reference</span>
             <button id="closeWindowBtn2">X</button>
         </div>
         
-        <div class="windowContent2" style="padding: 15px; text-align: center;">
-            <p>newjeans never die</p>
+        <div class="windowContent2">
+            <button id="uploadBtn" type="button" aria-label="Upload Reference Image">
+                <img src="upload.png" alt="Upload Icon" id="uploadIcon">
+            </button>
+            <input type="file" id="windowImageLoader" accept="image/*" style="display: none;">
+
+            <img id="windowImagePreview" src="" alt="Preview">
+            <span id="uploadPlaceholder">Upload a file to view it here</span>
         </div>
     </div>
 
+
+    <script>
+        // Creates dummy backup functions if game.js isn't initialized yet so your script won't crash
+        window.initCustomGame = window.initCustomGame || function() { console.log("Placeholder game setup run!"); };
+        window.stopCustomGame = window.stopCustomGame || function() { console.log("Placeholder game teardown run!"); };
+    </script>
     <script src="game.js"></script>   
     <script src="script.js"></script> 
 </body>
