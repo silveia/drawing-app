@@ -147,15 +147,12 @@ windowHeader2.addEventListener('mousedown', (e) => {
 });
 
 window.addEventListener('mousemove', (e) => {
-    // Handle Window 1 Drag
     if (isDraggingWindow) {
         const deltaX = e.clientX - startX;
         const deltaY = e.clientY - startY;
         miniWindow.style.left = `${initialWindowLeft + deltaX}px`;
         miniWindow.style.top = `${initialWindowTop + deltaY}px`;
     }
-    
-    // Handle Window 2 Drag
     if (isDraggingWindow2) {
         const deltaX = e.clientX - startX2;
         const deltaY = e.clientY - startY2;
@@ -218,20 +215,37 @@ function redrawAllStrokes() {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight); 
 
     drawingHistory.forEach(stroke => {
-        if (stroke.length < 2) return;
+        if (stroke.length === 0) return;
 
+        // Configure standard context properties
         if (stroke[0].tool === 'eraser') {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.strokeStyle = 'rgba(0,0,0,1)';
+            ctx.fillStyle = 'rgba(0,0,0,1)';
         } else {
             ctx.globalCompositeOperation = 'source-over';
             ctx.strokeStyle = stroke[0].color;
+            ctx.fillStyle = stroke[0].color;
         }
 
         ctx.lineWidth = stroke[0].size;
         ctx.lineCap = stroke[0].tool === 'square' ? 'square' : 'round';
         ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
 
+        // Fix: Render standalone dots/clicks safely 
+        if (stroke.length === 1) {
+            ctx.beginPath();
+            if (stroke[0].tool === 'square') {
+                const size = stroke[0].size;
+                ctx.fillRect(stroke[0].x - size / 2, stroke[0].y - size / 2, size, size);
+            } else {
+                ctx.arc(stroke[0].x, stroke[0].y, stroke[0].size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            return;
+        }
+
+        // Draw standard lines smoothly
         ctx.beginPath();
         ctx.moveTo(stroke[0].x, stroke[0].y);
 
@@ -240,6 +254,14 @@ function redrawAllStrokes() {
             const midY = (stroke[i].y + stroke[i + 1].y) / 2;
             ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
         }
+        
+        // Connect accurately to final stroke segment
+        ctx.quadraticCurveTo(
+            stroke[stroke.length - 1].x,
+            stroke[stroke.length - 1].y,
+            stroke[stroke.length - 1].x,
+            stroke[stroke.length - 1].y
+        );
         ctx.stroke();
     });
 
@@ -247,287 +269,4 @@ function redrawAllStrokes() {
 }
 
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-brushType.addEventListener('change', () => {
-    currentTool = brushType.value;
-});
-
-const resetTracking = () => {
-    isDrawing = false;
-    canvas.lastX = null;
-    canvas.lastY = null;
-    canvas.lastMidX = null;
-    canvas.lastMidY = null;
-    ctx.beginPath();
-    ctx.globalCompositeOperation = 'source-over';
-
-    if (currentStroke.length > 0) {
-        drawingHistory.push([...currentStroke]);
-        currentStroke = []; 
-        redoStack.length = 0; 
-    }
-};
-
-canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    draw(e);
-});
-
-window.addEventListener('mouseup', resetTracking);
-
-function draw(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    mouseX = x;
-    mouseY = y;
-
-    if (!isDrawing) return;        
-    
-    if (currentTool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)'; 
-    } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = colorPicker.value;
-    }
-
-    ctx.lineWidth = brushSize.value;
-    
-    if (currentTool === 'square') {
-        ctx.lineCap = 'square';
-        ctx.lineJoin = 'miter';
-    } else {
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-    }
-    ctx.imageSmoothingEnabled = true;
-
-    if (!canvas.lastX) {
-        canvas.lastX = x;
-        canvas.lastY = y;
-        canvas.lastMidX = x;
-        canvas.lastMidY = y;
-    }
-
-    const midX = (canvas.lastX + x) / 2;
-    const midY = (canvas.lastY + y) / 2;
-
-    ctx.beginPath();
-    ctx.moveTo(canvas.lastMidX, canvas.lastMidY);
-    ctx.quadraticCurveTo(canvas.lastX, canvas.lastY, midX, midY);
-    ctx.stroke();
-    
-    const lastPoint = currentStroke[currentStroke.length - 1];
-    if (!lastPoint || Math.abs(x - lastPoint.x) > 2 || Math.abs(y - lastPoint.y) > 2) {
-        currentStroke.push({
-            x: x,
-            y: y,
-            color: ctx.strokeStyle,
-            size: ctx.lineWidth,
-            tool: currentTool
-        });
-    }
-    
-    canvas.lastX = x;
-    canvas.lastY = y;
-    canvas.lastMidX = midX;
-    canvas.lastMidY = midY;
-}
-
-window.addEventListener('mousemove', draw);
-
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Shift') {
-        if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
-            drawCustomShape(mouseX, mouseY);
-        }
-    }
-
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault(); 
-        if (drawingHistory.length > 0) {
-            const undoneStroke = drawingHistory.pop();
-            redoStack.push(undoneStroke);
-            redrawAllStrokes();
-        }
-    }
-
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-        e.preventDefault(); 
-        if (redoStack.length > 0) {
-            const redoneStroke = redoStack.pop();
-            drawingHistory.push(redoneStroke);
-            redrawAllStrokes();
-        }
-    }
-});
-
-function drawCustomShape(x, y) {
-    if (!isImageLoaded) return; 
-    ctx.save();
-    const dynamicSize = Number(brushSize.value) * 2.5; 
-    const targetX = x - (dynamicSize / 2);
-    const targetY = y - (dynamicSize / 2);
-    ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
-    ctx.restore();
-}
-
-class Shimeji {
-    constructor() {
-        this.x = Math.random() * (window.innerWidth - 100);
-        this.y = -50; 
-        this.velocityY = 0; 
-        this.velocityX = (Math.random() - 0.5) * 2; 
-        this.gravity = 0.4;
-        this.bounceFactor = -0.3; 
-        this.isGrounded = false;
-        this.state = 'falling'; 
-        this.stateTimer = 0;
-
-        this.element = document.createElement('img');
-        this.element.src = charImgUrl;
-        this.element.classList.add('shimeji-char');
-        document.body.appendChild(this.element); 
-        this.updateElementPosition();
-    }
-
-    chooseNewState() {
-        this.stateTimer = Math.floor(Math.random() * 120) + 60; 
-        const choices = ['walking', 'idle', 'jumping'];
-        this.state = choices[Math.floor(Math.random() * choices.length)];
-
-        if (this.state === 'walking') {
-            this.velocityX = (Math.random() > 0.5 ? 1 : -1) * 1.2;
-        } else if (this.state === 'idle') {
-            this.velocityX = 0;
-        } else if (this.state === 'jumping') {
-            this.velocityY = -8 - Math.random() * 5; 
-            this.velocityX = (Math.random() - 0.5) * 4; 
-            this.isGrounded = false;
-            this.state = 'falling';
-        }
-    }
-    
-    update() {
-        const floorLevel = window.innerHeight - 100;
-
-        if (!this.isGrounded && this.state !== 'climbing') {
-            this.velocityY += this.gravity;
-            this.y += this.velocityY;
-            this.x += this.velocityX;
-
-            if (this.y >= floorLevel) {
-                this.y = floorLevel;
-                this.velocityY = this.velocityY * this.bounceFactor; 
-                if (Math.abs(this.velocityY) < 1) {
-                    this.velocityY = 0;
-                    this.isGrounded = true;
-                    this.chooseNewState();
-                }
-            }
-        }
-        else if (this.state === 'climbing') {
-            this.y += this.velocityY; 
-            this.stateTimer--;
-
-            if (this.stateTimer <= 0 || this.y <= 0 || this.y >= floorLevel) {
-                this.state = 'falling';
-                this.isGrounded = false;
-                this.velocityX = this.x <= 0 ? 1.5 : -1.5; 
-                this.element.style.transform = 'rotate(0deg)'; 
-            }
-        }
-        else {
-            this.x += this.velocityX;
-            this.stateTimer--;
-            if (this.stateTimer <= 0) this.chooseNewState();
-    
-            if (this.x <= 0 || this.x >= window.innerWidth - 100) {
-                this.x = this.x <= 0 ? 0 : window.innerWidth - 100;
-                if (Math.random() > 0.5) {
-                    this.state = 'climbing';
-                    this.isGrounded = false;
-                    this.velocityY = -1.5; 
-                    this.velocityX = 0;
-                    this.stateTimer = Math.floor(Math.random() * 150) + 100; 
-                    this.element.style.transform = this.x <= 0 ? 'rotate(90deg)' : 'rotate(-90deg)';
-                } else {
-                    this.velocityX *= -1; 
-                }
-            }
-        }
-        
-        if (this.x < 0) this.x = 0;
-        if (this.x > window.innerWidth - 100) this.x = window.innerWidth - 100;
-
-        if (this.state !== 'climbing' && this.velocityX !== 0) {
-            this.element.style.transform = this.velocityX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-        }
-        this.updateElementPosition();
-    }
-
-    updateElementPosition() {
-        this.element.style.left = `${this.x}px`;
-        this.element.style.top = `${this.y}px`;
-    }
-}
-
-clearBtn.addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    characters.forEach(char => char.element.remove());
-    characters.length = 0;
-    drawingHistory.length = 0; 
-});
-
-spawnBtn.addEventListener('click', () => {
-    if (!isCharImageLoaded) {
-        alert("error - pls upload sprite"); 
-        return; 
-    }
-    characters.push(new Shimeji());
-});
-
-function animationTick() {
-    characters.forEach(char => char.update());
-    requestAnimationFrame(animationTick);
-}
-requestAnimationFrame(animationTick);
-
-window.addEventListener('DOMContentLoaded', () => {
-    const savedData = localStorage.getItem('mySavedArt');
-    if (savedData) {
-        const parsedHistory = JSON.parse(savedData);
-        parsedHistory.forEach(stroke => drawingHistory.push(stroke));
-        redrawAllStrokes();
-    }
-});
-
-// ==========================================================================
-// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY
-// ==========================================================================
-
-// 1. Forward the custom square button click directly into the file input field
-uploadBtn.addEventListener('click', () => {
-    windowImageLoader.click();
-});
-
-// 2. Read the selected image and generate the file URL stream
-windowImageLoader.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-            windowImagePreview.src = event.target.result;
-            
-            // Swap display states to uncover the loaded canvas picture
-            windowImagePreview.style.display = 'block';
-            uploadPlaceholder.style.display = 'none';
-        };
-        
-        reader.readAsDataURL(file);
-    }
-});
+window.addEventListener('resize
