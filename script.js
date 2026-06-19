@@ -29,14 +29,11 @@ const startGameBtn = document.getElementById('startGameBtn');
 const saveBtn = document.getElementById('saveBtn');
 const loadBtn = document.getElementById('loadBtn');
 
-const drawingHistory = []; 
-let currentStroke = [];
-const redoStack = []; 
-
 let isDrawing = false;
 let currentTool = 'round';
 let mouseX = 0;
 let mouseY = 0;
+let livePoints = []; // Holds points only during the active stroke
 
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
@@ -75,28 +72,20 @@ closeWindowBtn2.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// 💾 PIXEL-PERFECT SAVE/LOAD ENGINE (MATCHES PROFESSIONAL SOFTWARE)
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE
 // ==========================================================================
 
 saveBtn.addEventListener('click', () => {
-    // Converts the canvas pixels directly into an unchangeable image data string
     const canvasDataUrl = canvas.toDataURL();
     localStorage.setItem('mySavedArt', canvasDataUrl);
-    alert("Artwork saved successfully!");
 });
 
 loadBtn.addEventListener('click', () => {
     const savedDataUrl = localStorage.getItem('mySavedArt');
-    if (!savedDataUrl) {
-        alert("No saved artwork found on this browser!");
-        return;
     }
     
-    // Clear everything and clear history states
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    drawingHistory.length = 0; 
     
-    // Load the image directly onto the canvas context back exactly as it was
     const img = new Image();
     img.onload = () => {
         ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -210,7 +199,7 @@ function resizeCanvas() {
     ctx.scale(scale, scale);
     ctx.imageSmoothingEnabled = true;
 
-    // Redraw using stored image string if available
+    // Pull from local storage image back onto your view scale flawlessly
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
@@ -229,35 +218,27 @@ brushType.addEventListener('change', () => {
 });
 
 const resetTracking = () => {
-    if (isDrawing && currentStroke.length > 0) {
-        drawingHistory.push([...currentStroke]);
-        currentStroke = []; 
-        redoStack.length = 0; 
+    if (isDrawing) {
+        // Capture a snapshot of the stroke exactly as it looks right now
+        const midSnapshot = canvas.toDataURL();
+        localStorage.setItem('mySavedArt', midSnapshot);
     }
     isDrawing = false;
-    canvas.points = [];
+    livePoints = [];
     ctx.beginPath();
     ctx.globalCompositeOperation = 'source-over';
 };
 
 canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
-    canvas.points = [];
+    livePoints = [];
     
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    canvas.points.push({ x: x, y: y });
+    livePoints.push({ x: x, y: y });
 
-    currentStroke.push({
-        x: x,
-        y: y,
-        color: currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value,
-        size: brushSize.value,
-        tool: currentTool
-    });
-    
     ctx.beginPath();
     if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -304,26 +285,18 @@ function draw(e) {
     ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
     ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
 
-    canvas.points.push({ x: x, y: y });
-    
-    currentStroke.push({
-        x: x,
-        y: y,
-        color: currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value,
-        size: brushSize.value,
-        tool: currentTool
-    });
+    livePoints.push({ x: x, y: y });
 
-    if (canvas.points.length > 1) {
+    if (livePoints.length > 1) {
         ctx.beginPath();
-        const p1 = canvas.points[canvas.points.length - 2];
-        const p2 = canvas.points[canvas.points.length - 1];
+        const p1 = livePoints[livePoints.length - 2];
+        const p2 = livePoints[livePoints.length - 1];
         
-        if (canvas.points.length === 2) {
+        if (livePoints.length === 2) {
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
         } else {
-            const p0 = canvas.points[canvas.points.length - 3];
+            const p0 = livePoints[livePoints.length - 3];
             const mid1X = (p0.x + p1.x) / 2;
             const mid1Y = (p0.y + p1.y) / 2;
             const mid2X = (p1.x + p2.x) / 2;
@@ -354,6 +327,10 @@ function drawCustomShape(x, y) {
     const targetY = y - (dynamicSize / 2);
     ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
     ctx.restore();
+    
+    // Lock character stamp changes directly into cache as well
+    const stampSnapshot = canvas.toDataURL();
+    localStorage.setItem('mySavedArt', stampSnapshot);
 }
 
 class Shimeji {
@@ -460,8 +437,7 @@ clearBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
-    drawingHistory.length = 0; 
-    // Removed the localStorage deletion so your saves stay safe!
+    localStorage.removeItem('mySavedArt');
 });
 
 spawnBtn.addEventListener('click', () => {
