@@ -41,7 +41,6 @@ let mouseY = 0;
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
     gameScreen.classList.remove('hidden-game-element');  
-    console.log("Custom game module booted up successfully!");
     if (typeof initCustomGame === 'function') {
         initCustomGame(); 
     }
@@ -243,7 +242,6 @@ function redrawAllStrokes() {
             ctx.stroke();
         } else {
             ctx.moveTo(stroke[0].x, stroke[0].y);
-            // Dynamic mid-point curves matching the real-time loop perfectly
             for (let i = 1; i < stroke.length - 1; i++) {
                 const midX = (stroke[i].x + stroke[i + 1].x) / 2;
                 const midY = (stroke[i].y + stroke[i + 1].y) / 2;
@@ -352,7 +350,6 @@ function draw(e) {
 
     if (canvas.points.length > 1) {
         ctx.beginPath();
-        // Move to the midpoint of the older segment
         const p1 = canvas.points[canvas.points.length - 2];
         const p2 = canvas.points[canvas.points.length - 1];
         
@@ -540,10 +537,6 @@ window.addEventListener('DOMContentLoaded', () => {
         redrawAllStrokes();
     }
 });
-
-// ==========================================================================
-// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY 
-// ==========================================================================
 
 const refWindowBtn = document.getElementById('uploadBtn');
 const refImageLoader = document.getElementById('windowImageLoader');
