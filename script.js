@@ -228,7 +228,6 @@ function redrawAllStrokes() {
         ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
 
         ctx.beginPath();
-        ctx.moveTo(stroke[0].x, stroke[0].y);
 
         if (stroke.length === 1) {
             if (stroke[0].tool === 'square') {
@@ -238,10 +237,19 @@ function redrawAllStrokes() {
                 ctx.arc(stroke[0].x, stroke[0].y, stroke[0].size / 2, 0, Math.PI * 2);
                 ctx.fill();
             }
+        } else if (stroke.length === 2) {
+            ctx.moveTo(stroke[0].x, stroke[0].y);
+            ctx.lineTo(stroke[1].x, stroke[1].y);
+            ctx.stroke();
         } else {
-            for (let i = 1; i < stroke.length; i++) {
-                ctx.lineTo(stroke[i].x, stroke[i].y);
+            ctx.moveTo(stroke[0].x, stroke[0].y);
+            // Dynamic mid-point curves matching the real-time loop perfectly
+            for (let i = 1; i < stroke.length - 1; i++) {
+                const midX = (stroke[i].x + stroke[i + 1].x) / 2;
+                const midY = (stroke[i].y + stroke[i + 1].y) / 2;
+                ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
             }
+            ctx.lineTo(stroke[stroke.length - 1].x, stroke[stroke.length - 1].y);
             ctx.stroke();
         }
     });
@@ -263,21 +271,20 @@ const resetTracking = () => {
         redoStack.length = 0; 
     }
     isDrawing = false;
-    canvas.lastX = null;
-    canvas.lastY = null;
+    canvas.points = [];
     ctx.beginPath();
     ctx.globalCompositeOperation = 'source-over';
 };
 
 canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
+    canvas.points = [];
     
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    canvas.lastX = x;
-    canvas.lastY = y;
+    canvas.points.push({ x: x, y: y });
 
     currentStroke.push({
         x: x,
@@ -319,7 +326,7 @@ function draw(e) {
     mouseX = x;
     mouseY = y;
 
-    if (!isDrawing || canvas.lastX === null) return;        
+    if (!isDrawing) return;        
     
     if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -333,10 +340,7 @@ function draw(e) {
     ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
     ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
 
-    ctx.beginPath();
-    ctx.moveTo(canvas.lastX, canvas.lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    canvas.points.push({ x: x, y: y });
     
     currentStroke.push({
         x: x,
@@ -345,9 +349,28 @@ function draw(e) {
         size: brushSize.value,
         tool: currentTool
     });
-    
-    canvas.lastX = x;
-    canvas.lastY = y;
+
+    if (canvas.points.length > 1) {
+        ctx.beginPath();
+        // Move to the midpoint of the older segment
+        const p1 = canvas.points[canvas.points.length - 2];
+        const p2 = canvas.points[canvas.points.length - 1];
+        
+        if (canvas.points.length === 2) {
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+        } else {
+            const p0 = canvas.points[canvas.points.length - 3];
+            const mid1X = (p0.x + p1.x) / 2;
+            const mid1Y = (p0.y + p1.y) / 2;
+            const mid2X = (p1.x + p2.x) / 2;
+            const mid2Y = (p1.y + p2.y) / 2;
+            
+            ctx.moveTo(mid1X, mid1Y);
+            ctx.quadraticCurveTo(p1.x, p1.y, mid2X, mid2Y);
+        }
+        ctx.stroke();
+    }
 }
 
 window.addEventListener('mousemove', draw);
