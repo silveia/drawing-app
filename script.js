@@ -29,7 +29,6 @@ const startGameBtn = document.getElementById('startGameBtn');
 const saveBtn = document.getElementById('saveBtn');
 const loadBtn = document.getElementById('loadBtn');
 
-// Tracking states declared cleanly once
 const drawingHistory = []; 
 let currentStroke = [];
 const redoStack = []; 
@@ -99,7 +98,6 @@ loadBtn.addEventListener('click', () => {
     redrawAllStrokes();
 });
 
-// 🎯 CLICK-ANYWHERE WINDOW FOCUS LOGIC
 miniWindow.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '100';
     miniWindow2.style.zIndex = '99';
@@ -110,7 +108,6 @@ miniWindow2.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '99';
 });
 
-// 🛠️ DRAG LOGIC FOR WINDOW 1
 let isDraggingWindow = false;
 let startX, startY, initialWindowLeft, initialWindowTop;
 
@@ -128,7 +125,6 @@ windowHeader.addEventListener('mousedown', (e) => {
     miniWindow2.style.zIndex = '99';
 });
 
-// 🛠️ DRAG LOGIC FOR WINDOW 2
 let isDraggingWindow2 = false;
 let startX2, startY2, initialWindowLeft2, initialWindowTop2;
 
@@ -217,7 +213,6 @@ function redrawAllStrokes() {
     drawingHistory.forEach(stroke => {
         if (stroke.length === 0) return;
 
-        // Configure standard context properties
         if (stroke[0].tool === 'eraser') {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.strokeStyle = 'rgba(0,0,0,1)';
@@ -232,7 +227,6 @@ function redrawAllStrokes() {
         ctx.lineCap = stroke[0].tool === 'square' ? 'square' : 'round';
         ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
 
-        // Fix: Render standalone dots/clicks safely 
         if (stroke.length === 1) {
             ctx.beginPath();
             if (stroke[0].tool === 'square') {
@@ -245,7 +239,6 @@ function redrawAllStrokes() {
             return;
         }
 
-        // Draw standard lines smoothly
         ctx.beginPath();
         ctx.moveTo(stroke[0].x, stroke[0].y);
 
@@ -255,7 +248,6 @@ function redrawAllStrokes() {
             ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
         }
         
-        // Connect accurately to final stroke segment
         ctx.quadraticCurveTo(
             stroke[stroke.length - 1].x,
             stroke[stroke.length - 1].y,
@@ -541,7 +533,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================================================
-// 🖼️ REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY
+// REFERENCE WINDOW SQUARE UPLOADER FUNCTIONALITY
 // ==========================================================================
 
 uploadBtn.addEventListener('click', () => {
