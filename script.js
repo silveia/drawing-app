@@ -11,10 +11,16 @@ const characters = [];
 let charImgUrl = '';
 let isCharImageLoaded = false;
 const charLoader = document.getElementById('charLoader');
+
 const miniWindow = document.getElementById('miniWindow');
+const miniWindow2 = document.getElementById('miniWindow2');
+
 const gameBtn = document.getElementById('gameBtn'); 
+const browserBtn = document.getElementById('browserBtn'); 
 const closeWindowBtn = document.getElementById('closeWindowBtn');
+const closeWindowBtn2 = document.getElementById('closeWindowBtn2'); // 🆕 Added close button for window 2
 const windowHeader = document.getElementById('windowHeader');
+const windowHeader2 = document.getElementById('windowHeader2'); // 🆕 Added header for window 2
 
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
@@ -23,12 +29,15 @@ const startGameBtn = document.getElementById('startGameBtn');
 const saveBtn = document.getElementById('saveBtn');
 const loadBtn = document.getElementById('loadBtn');
 
+// Tracking states declared cleanly once
+const drawingHistory = []; 
+let currentStroke = [];
+const redoStack = []; 
+
 let isDrawing = false;
 let currentTool = 'round';
 let mouseX = 0;
 let mouseY = 0;
-const drawingHistory = []; 
-let currentStroke = [];
 
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
@@ -44,6 +53,11 @@ gameBtn.addEventListener('click', () => {
     miniWindow.style.display = 'block'; 
 });
 
+browserBtn.addEventListener('click', () => {
+    miniWindow2.classList.remove('hidden-window');
+    miniWindow2.style.display = 'block';
+});
+
 closeWindowBtn.addEventListener('click', () => {
     miniWindow.classList.add('hidden-window'); 
     startScreen.classList.remove('hidden-game-element'); 
@@ -53,13 +67,18 @@ closeWindowBtn.addEventListener('click', () => {
     }
 });
 
+// 🆕 Close action for the second window
+closeWindowBtn2.addEventListener('click', () => {
+    miniWindow2.classList.add('hidden-window');
+    miniWindow2.style.display = 'none';
+});
+
 saveBtn.addEventListener('click', () => {
     if (drawingHistory.length === 0) {
         alert("Your canvas is completely blank! Draw something first.");
         return;
     }
     localStorage.setItem('mySavedArt', JSON.stringify(drawingHistory));
-    alert("Art saved successfully to browser storage! 🎉");
 });
 
 loadBtn.addEventListener('click', () => {
@@ -75,9 +94,9 @@ loadBtn.addEventListener('click', () => {
     parsedHistory.forEach(stroke => drawingHistory.push(stroke));
     
     redrawAllStrokes();
-    alert("Art loaded smoothly! 🎨");
 });
 
+// 🛠️ DRAG LOGIC FOR WINDOW 1
 let isDraggingWindow = false;
 let startX, startY, initialWindowLeft, initialWindowTop;
 
@@ -92,18 +111,47 @@ windowHeader.addEventListener('mousedown', (e) => {
     windowHeader.style.backgroundColor = '#624D5A'; 
 });
 
+// 🆕 DRAG LOGIC FOR WINDOW 2
+let isDraggingWindow2 = false;
+let startX2, startY2, initialWindowLeft2, initialWindowTop2;
+
+windowHeader2.addEventListener('mousedown', (e) => {
+    isDraggingWindow2 = true;
+    startX2 = e.clientX;
+    startY2 = e.clientY;
+    
+    const rect = miniWindow2.getBoundingClientRect();
+    initialWindowLeft2 = rect.left;
+    initialWindowTop2 = rect.top;
+    windowHeader2.style.backgroundColor = '#624D5A'; 
+});
+
 window.addEventListener('mousemove', (e) => {
-    if (!isDraggingWindow) return;
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    miniWindow.style.left = `${initialWindowLeft + deltaX}px`;
-    miniWindow.style.top = `${initialWindowTop + deltaY}px`;
+    // Handle Window 1 Drag
+    if (isDraggingWindow) {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        miniWindow.style.left = `${initialWindowLeft + deltaX}px`;
+        miniWindow.style.top = `${initialWindowTop + deltaY}px`;
+    }
+    
+    // 🆕 Handle Window 2 Drag
+    if (isDraggingWindow2) {
+        const deltaX = e.clientX - startX2;
+        const deltaY = e.clientY - startY2;
+        miniWindow2.style.left = `${initialWindowLeft2 + deltaX}px`;
+        miniWindow2.style.top = `${initialWindowTop2 + deltaY}px`;
+    }
 });
 
 window.addEventListener('mouseup', () => {
     if (isDraggingWindow) {
         isDraggingWindow = false;
         windowHeader.style.backgroundColor = '#49393F'; 
+    }
+    if (isDraggingWindow2) {
+        isDraggingWindow2 = false;
+        windowHeader2.style.backgroundColor = '#49393F'; 
     }
 });
 
@@ -152,7 +200,14 @@ function redrawAllStrokes() {
     drawingHistory.forEach(stroke => {
         if (stroke.length < 2) return;
 
-        ctx.strokeStyle = stroke[0].color;
+        if (stroke[0].tool === 'eraser') {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = stroke[0].color;
+        }
+
         ctx.lineWidth = stroke[0].size;
         ctx.lineCap = stroke[0].tool === 'square' ? 'square' : 'round';
         ctx.lineJoin = stroke[0].tool === 'square' ? 'miter' : 'round';
@@ -167,6 +222,8 @@ function redrawAllStrokes() {
         }
         ctx.stroke();
     });
+
+    ctx.globalCompositeOperation = 'source-over';
 }
 
 resizeCanvas();
@@ -183,10 +240,12 @@ const resetTracking = () => {
     canvas.lastMidX = null;
     canvas.lastMidY = null;
     ctx.beginPath();
+    ctx.globalCompositeOperation = 'source-over';
 
     if (currentStroke.length > 0) {
         drawingHistory.push([...currentStroke]);
         currentStroke = []; 
+        redoStack.length = 0; 
     }
 };
 
@@ -207,10 +266,12 @@ function draw(e) {
 
     if (!isDrawing) return;        
     
-    if (currentTool === 'round' || currentTool === 'square') {
-        ctx.strokeStyle = colorPicker.value;
+    if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)'; 
     } else {
-        ctx.strokeStyle = '#ffffff'; 
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = colorPicker.value;
     }
 
     ctx.lineWidth = brushSize.value;
@@ -262,6 +323,24 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
         if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
             drawCustomShape(mouseX, mouseY);
+        }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault(); 
+        if (drawingHistory.length > 0) {
+            const undoneStroke = drawingHistory.pop();
+            redoStack.push(undoneStroke);
+            redrawAllStrokes();
+        }
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault(); 
+        if (redoStack.length > 0) {
+            const redoneStroke = redoStack.pop();
+            drawingHistory.push(redoneStroke);
+            redrawAllStrokes();
         }
     }
 });
