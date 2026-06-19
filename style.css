@@ -160,18 +160,22 @@ select {
     transform: scale(0.95); 
 }
 
-/* 🆕 Custom Square Reference Upload Button */
+/* Custom Square Reference Upload Button */
 #uploadBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10; 
     width: 44px;          
     height: 44px;         
-    background-color: #775F6C; 
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    background-color: transparent;
-    border: none;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none;
     border-radius: 0px; 
     transition: transform 0.1s ease;
 }
@@ -184,11 +188,12 @@ select {
 }
 
 #uploadBtn:hover {
-    transform: scale(1.05);
+    background-color: transparent !important;
+    transform: scale(1.15);
 }
 
 #uploadBtn:active {
-    transform: scale(0.95);
+    transform: scale(0.90);
 }
 
 
@@ -260,7 +265,7 @@ select {
 
 
 
-/* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐁𝐑𝐎𝐖𝐒𝐄𝐑 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
+/* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐁𝐑𝐎𝐖𝐒𝐄Ｒ / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
 
 
 
@@ -318,7 +323,7 @@ select {
 .windowContent2 {
     position: relative;
     width: 100%;
-    height: calc(100% - 35px); /* This forces it to stretch perfectly with the new container size */
+    height: calc(100% - 35px); 
     box-sizing: border-box;
     background-color: white;
     display: flex;
@@ -331,7 +336,7 @@ select {
 #windowImagePreview {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Change to 'contain' if you don't want the image cropped */
+    object-fit: cover; 
     display: none;
 }
 
@@ -342,23 +347,6 @@ select {
     font-family: monospace;
     position: absolute;
     pointer-events: none;
-}
-
-/* Floats the custom square button in the top-right corner over everything */
-#uploadBtn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10; /* Ensures it stays visible on top of your loaded photo */
-    width: 44px;          
-    height: 44px;         
-    background-color: rgba(119, 95, 108, 0.85); /* Slightly transparent so it looks sleek */
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    transition: transform 0.1s ease, background-color 0.1s ease;
 }
 
 
