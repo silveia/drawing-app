@@ -53,6 +53,25 @@ function initCustomGame() {
     teleportTarget();               // Jump the target to its first random spot
 }
 
-function stopCustomGame() {
-    isPlaying = false;              // Turn the game mechanics OFF
-}
+// 🖼️ MINI WINDOW IMAGE UPLOADER LOGIC
+const windowImageLoader = document.getElementById('windowImageLoader');
+const windowImagePreview = document.getElementById('windowImagePreview');
+const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+
+windowImageLoader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+            // Set the image src to the uploaded file data link
+            windowImagePreview.src = event.target.result;
+            
+            // Toggle visibility so the image shows and placeholder text hides
+            windowImagePreview.style.display = 'block';
+            uploadPlaceholder.style.display = 'none';
+        };
+        
+        reader.readAsDataURL(file);
+    }
+});
