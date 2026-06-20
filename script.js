@@ -33,7 +33,7 @@ let isDrawing = false;
 let currentTool = 'round';
 let mouseX = 0;
 let mouseY = 0;
-let livePoints = []; // Holds points only during the active stroke
+let livePoints = []; 
 
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
@@ -72,16 +72,19 @@ closeWindowBtn2.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
 // ==========================================================================
 
 saveBtn.addEventListener('click', () => {
     const canvasDataUrl = canvas.toDataURL();
     localStorage.setItem('mySavedArt', canvasDataUrl);
+    // alert was removed from here
 });
 
 loadBtn.addEventListener('click', () => {
     const savedDataUrl = localStorage.getItem('mySavedArt');
+    if (!savedDataUrl) {
+        return; // alert was removed from here
     }
     
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -199,7 +202,6 @@ function resizeCanvas() {
     ctx.scale(scale, scale);
     ctx.imageSmoothingEnabled = true;
 
-    // Pull from local storage image back onto your view scale flawlessly
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
@@ -219,7 +221,6 @@ brushType.addEventListener('change', () => {
 
 const resetTracking = () => {
     if (isDrawing) {
-        // Capture a snapshot of the stroke exactly as it looks right now
         const midSnapshot = canvas.toDataURL();
         localStorage.setItem('mySavedArt', midSnapshot);
     }
@@ -328,7 +329,6 @@ function drawCustomShape(x, y) {
     ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
     ctx.restore();
     
-    // Lock character stamp changes directly into cache as well
     const stampSnapshot = canvas.toDataURL();
     localStorage.setItem('mySavedArt', stampSnapshot);
 }
@@ -442,6 +442,7 @@ clearBtn.addEventListener('click', () => {
 
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
+        // Only error alert kept in case asset loads break entirely
         alert("error - pls upload sprite"); 
         return; 
     }
