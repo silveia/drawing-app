@@ -35,6 +35,10 @@ let mouseX = 0;
 let mouseY = 0;
 let livePoints = []; 
 
+let undoStack = [];
+let redoStack = [];
+const MAX_STATES = 20; 
+
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
     gameScreen.classList.remove('hidden-game-element');  
@@ -78,21 +82,23 @@ closeWindowBtn2.addEventListener('click', () => {
 saveBtn.addEventListener('click', () => {
     const canvasDataUrl = canvas.toDataURL();
     localStorage.setItem('mySavedArt', canvasDataUrl);
-    // alert was removed from here
 });
 
 loadBtn.addEventListener('click', () => {
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (!savedDataUrl) {
-        return; // alert was removed from here
+        return; 
     }
     
+//  New way: Wait for the image to load COMPLETELY before swapping the graphics
+const img = new Image();
+img.onload = () => {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    
-    const img = new Image();
-    img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
-    };
+    ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+    localStorage.setItem('mySavedArt', previousState);
+};
+img.src = previousState;
+
     img.src = savedDataUrl;
 });
 
@@ -231,6 +237,12 @@ const resetTracking = () => {
 };
 
 canvas.addEventListener('mousedown', (e) => {
+    // 1. Capture state BEFORE drawing to undo cleanly
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
+    if (undoStack.length > MAX_STATES) undoStack.shift();
+    redoStack = []; 
+
     isDrawing = true;
     livePoints = [];
     
@@ -318,10 +330,29 @@ window.addEventListener('keydown', (e) => {
             drawCustomShape(mouseX, mouseY);
         }
     }
+    
+    // Check for Undo (Ctrl + Z or Cmd + Z)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault(); 
+        executeUndo();
+    }
+    
+    // Check for Redo (Ctrl + Y or Cmd + Y)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        executeRedo();
+    }
 });
 
 function drawCustomShape(x, y) {
     if (!isImageLoaded) return; 
+
+    // Capture state BEFORE stamp drops
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
+    if (undoStack.length > MAX_STATES) undoStack.shift();
+    redoStack = [];
+
     ctx.save();
     const dynamicSize = Number(brushSize.value) * 2.5; 
     const targetX = x - (dynamicSize / 2);
@@ -434,6 +465,10 @@ class Shimeji {
 }
 
 clearBtn.addEventListener('click', () => {
+    // Treat clear screen as an undoable action
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
@@ -442,7 +477,6 @@ clearBtn.addEventListener('click', () => {
 
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
-        // Only error alert kept in case asset loads break entirely
         alert("error - pls upload sprite"); 
         return; 
     }
@@ -494,4 +528,36 @@ if (refImageLoader && refImagePreview) {
             reader.readAsDataURL(file);
         }
     });
+}
+
+function executeUndo() {
+    if (undoStack.length === 0) return;
+
+    const currentState = canvas.toDataURL();
+    redoStack.push(currentState);
+
+    const previousState = undoStack.pop();
+    
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    const img = new Image();
+    img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        localStorage.setItem('mySavedArt', previousState);
+    };
+    img.src = previousState;
+}
+
+function executeRedo() {
+    if (redoStack.length === 0) return;
+
+    const nextState = redoStack.pop();
+    undoStack.push(canvas.toDataURL());
+
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    const img = new Image();
+    img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        localStorage.setItem('mySavedArt', nextState);
+    };
+    img.src = nextState;
 }
