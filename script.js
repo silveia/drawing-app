@@ -79,7 +79,12 @@ closeWindowBtn2.addEventListener('click', () => {
 // 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
 // ==========================================================================
 
+// ==========================================================================
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
+// ==========================================================================
+
 saveBtn.addEventListener('click', () => {
+    // Captures the true pixel-perfect layout of your high-res canvas
     const canvasDataUrl = canvas.toDataURL();
     localStorage.setItem('mySavedArt', canvasDataUrl);
 });
@@ -89,6 +94,22 @@ loadBtn.addEventListener('click', () => {
     if (!savedDataUrl) {
         return; 
     }
+    
+    const img = new Image();
+    img.onload = () => {
+        // 1. Reset the canvas transformation matrix so clearRect doesn't skew
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 2. Draw the saved image using the true pixel dimensions
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // 3. Re-apply the HD device pixel scale so your brush stays crisp afterward
+        const scale = window.devicePixelRatio || 1;
+        ctx.scale(scale, scale);
+    };
+    img.src = savedDataUrl;
+});
     
 //  New way: Wait for the image to load COMPLETELY before swapping the graphics
 const img = new Image();
@@ -212,7 +233,7 @@ function resizeCanvas() {
     if (savedDataUrl) {
         const img = new Image();
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         };
         img.src = savedDataUrl;
     }
