@@ -76,15 +76,10 @@ closeWindowBtn2.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
-// ==========================================================================
-
-// ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS & FLASHES REMOVED)
 // ==========================================================================
 
 saveBtn.addEventListener('click', () => {
-    // Captures the true pixel-perfect layout of your high-res canvas
     const canvasDataUrl = canvas.toDataURL();
     localStorage.setItem('mySavedArt', canvasDataUrl);
 });
@@ -97,29 +92,13 @@ loadBtn.addEventListener('click', () => {
     
     const img = new Image();
     img.onload = () => {
-        // 1. Reset the canvas transformation matrix so clearRect doesn't skew
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // 2. Draw the saved image using the true pixel dimensions
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        // 3. Re-apply the HD device pixel scale so your brush stays crisp afterward
         const scale = window.devicePixelRatio || 1;
         ctx.scale(scale, scale);
     };
-    img.src = savedDataUrl;
-});
-    
-//  New way: Wait for the image to load COMPLETELY before swapping the graphics
-const img = new Image();
-img.onload = () => {
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
-    localStorage.setItem('mySavedArt', previousState);
-};
-img.src = previousState;
-
     img.src = savedDataUrl;
 });
 
@@ -258,7 +237,6 @@ const resetTracking = () => {
 };
 
 canvas.addEventListener('mousedown', (e) => {
-    // 1. Capture state BEFORE drawing to undo cleanly
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
     if (undoStack.length > MAX_STATES) undoStack.shift();
@@ -284,15 +262,10 @@ canvas.addEventListener('mousedown', (e) => {
         ctx.fillStyle = colorPicker.value;
     }
     ctx.lineWidth = brushSize.value;
-    ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
-    ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
-
-    if (currentTool === 'square') {
-        ctx.fillRect(x - brushSize.value / 2, y - brushSize.value / 2, brushSize.value, brushSize.value);
-    } else {
-        ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
+    ctx.fill();
 });
 
 window.addEventListener('mouseup', resetTracking);
@@ -316,8 +289,8 @@ function draw(e) {
     }
 
     ctx.lineWidth = brushSize.value;
-    ctx.lineCap = currentTool === 'square' ? 'square' : 'round';
-    ctx.lineJoin = currentTool === 'square' ? 'miter' : 'round';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     livePoints.push({ x: x, y: y });
 
@@ -352,13 +325,11 @@ window.addEventListener('keydown', (e) => {
         }
     }
     
-    // Check for Undo (Ctrl + Z or Cmd + Z)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault(); 
         executeUndo();
     }
     
-    // Check for Redo (Ctrl + Y or Cmd + Y)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         executeRedo();
@@ -368,7 +339,6 @@ window.addEventListener('keydown', (e) => {
 function drawCustomShape(x, y) {
     if (!isImageLoaded) return; 
 
-    // Capture state BEFORE stamp drops
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
     if (undoStack.length > MAX_STATES) undoStack.shift();
@@ -486,7 +456,6 @@ class Shimeji {
 }
 
 clearBtn.addEventListener('click', () => {
-    // Treat clear screen as an undoable action
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
 
@@ -515,7 +484,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedDataUrl) {
         const img = new Image();
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         };
         img.src = savedDataUrl;
     }
@@ -559,10 +528,14 @@ function executeUndo() {
 
     const previousState = undoStack.pop();
     
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     const img = new Image();
     img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const scale = window.devicePixelRatio || 1;
+        ctx.scale(scale, scale);
         localStorage.setItem('mySavedArt', previousState);
     };
     img.src = previousState;
@@ -574,10 +547,14 @@ function executeRedo() {
     const nextState = redoStack.pop();
     undoStack.push(canvas.toDataURL());
 
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     const img = new Image();
     img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.clientWidth, canvas.clientHeight);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const scale = window.devicePixelRatio || 1;
+        ctx.scale(scale, scale);
         localStorage.setItem('mySavedArt', nextState);
     };
     img.src = nextState;
