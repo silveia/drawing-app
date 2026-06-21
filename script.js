@@ -76,7 +76,7 @@ closeWindowBtn2.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS & FLASHES REMOVED)
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (ALERTS REMOVED)
 // ==========================================================================
 
 saveBtn.addEventListener('click', () => {
@@ -264,6 +264,7 @@ canvas.addEventListener('mousedown', (e) => {
     ctx.lineWidth = brushSize.value;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
     ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
     ctx.fill();
 });
@@ -484,7 +485,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedDataUrl) {
         const img = new Image();
         img.onload = () => {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const scale = window.devicePixelRatio || 1;
+            ctx.scale(scale, scale);
         };
         img.src = savedDataUrl;
     }
