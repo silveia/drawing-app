@@ -76,29 +76,49 @@ closeWindowBtn2.addEventListener('click', () => {
 });
 
 // ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE
+// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (CLEANED)
 // ==========================================================================
 
-saveBtn.addEventListener('click', () => {
-    const canvasDataUrl = canvas.toDataURL();
-    localStorage.setItem('mySavedArt', canvasDataUrl);
-});
+if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+        console.log("💾 Save button successfully clicked!"); 
+        try {
+            const canvasDataUrl = canvas.toDataURL();
+            localStorage.setItem('mySavedArt', canvasDataUrl);
+            console.log("✅ Art snapshot committed to local storage.");
+        } catch (err) {
+            console.error("❌ Failed to stringify canvas state data:", err);
+        }
+    });
+} else {
+    console.warn("⚠️ Warning: element with id='saveBtn' was not detected in DOM during initialization.");
+}
 
-loadBtn.addEventListener('click', () => {
-    const savedDataUrl = localStorage.getItem('mySavedArt');
-    if (!savedDataUrl) return; 
-    
-    const img = new Image();
-    img.onload = () => {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+if (loadBtn) {
+    loadBtn.addEventListener('click', () => {
+        console.log("🔄 Load button successfully clicked!"); 
+        const savedDataUrl = localStorage.getItem('mySavedArt');
+        if (!savedDataUrl) {
+            console.warn("⚠️ Fetch complete: No artwork entry keys matching 'mySavedArt' exist in storage.");
+            return; 
+        }
         
-        const scale = window.devicePixelRatio || 1;
-        ctx.scale(scale, scale);
-    };
-    img.src = savedDataUrl;
-});
+        const img = new Image();
+        img.onload = () => {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const scale = window.devicePixelRatio || 1;
+            ctx.scale(scale, scale);
+            console.log("✅ Canvas state matrix successfully loaded and adjusted.");
+        };
+        img.onerror = (e) => console.error("❌ Failed to parse stored string asset back to dynamic image token.", e);
+        img.src = savedDataUrl;
+    });
+} else {
+    console.warn("⚠️ Warning: element with id='loadBtn' was not detected in DOM during initialization.");
+}
 
 miniWindow.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '100';
@@ -199,35 +219,66 @@ charLoader.addEventListener('change', (e) => {
 
 function resizeCanvas() {
     const scale = window.devicePixelRatio || 1; 
-    canvas.width = canvas.clientWidth * scale;
-    canvas.height = canvas.clientHeight * scale;
+    const targetWidth = container ? container.clientWidth : (canvas.clientWidth || 800);
+    const targetHeight = container ? container.clientHeight : (canvas.clientHeight || 600);
+    
+    const newWidth = targetWidth * scale;
+    const newHeight = targetHeight * scale;
+    
+    if (canvas.width !== newWidth || canvas.height !== newHeight) {
+        let temporarySave = null;
+        if (canvas.width > 0 && canvas.height > 0) {
+            temporarySave = canvas.toDataURL();
+        }
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0); 
-    ctx.scale(scale, scale);
-    ctx.imageSmoothingEnabled = true;
+        canvas.width = newWidth;
+        canvas.height = newHeight;
 
+        ctx.setTransform(1, 0, 0, 1, 0, 0); 
+        ctx.scale(scale, scale);
+        ctx.imageSmoothingEnabled = true;
+
+        if (temporarySave) {
+            const restoreImg = new Image();
+            restoreImg.onload = () => {
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.drawImage(restoreImg, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            };
+            restoreImg.src = temporarySave;
+        }
+    }
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ==========================================================================
+// 💾 RELIABLE STARTUP ARTWORK RESTORATION
+// ==========================================================================
+
+window.addEventListener('load', () => {
+    resizeCanvas(); 
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
         img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.setTransform(1, 0, 0, 1, 0, 0); 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+            
+            const scale = window.devicePixelRatio || 1;
+            ctx.scale(scale, scale);
         };
         img.src = savedDataUrl;
     }
-}
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+});
 
 brushType.addEventListener('change', () => {
     currentTool = brushType.value;
 });
 
 const resetTracking = () => {
-    if (isDrawing) {
-        const midSnapshot = canvas.toDataURL();
-        localStorage.setItem('mySavedArt', midSnapshot);
-    }
     isDrawing = false;
     livePoints = [];
     ctx.beginPath();
@@ -461,8 +512,7 @@ clearBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
-    localStorage.removeItem('mySavedArt');
-});
+{}});
 
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
@@ -477,22 +527,6 @@ function animationTick() {
     requestAnimationFrame(animationTick);
 }
 requestAnimationFrame(animationTick);
-
-window.addEventListener('DOMContentLoaded', () => {
-    const savedDataUrl = localStorage.getItem('mySavedArt');
-    if (savedDataUrl) {
-        const img = new Image();
-        img.onload = () => {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            const scale = window.devicePixelRatio || 1;
-            ctx.scale(scale, scale);
-        };
-        img.src = savedDataUrl;
-    }
-});
 
 const refWindowBtn = document.getElementById('uploadBtn');
 const refImageLoader = document.getElementById('windowImageLoader');
