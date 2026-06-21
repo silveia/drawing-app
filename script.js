@@ -80,12 +80,8 @@ closeWindowBtn2.addEventListener('click', () => {
 // ==========================================================================
 
 saveBtn.addEventListener('click', () => {
-    try {
-        const canvasDataUrl = canvas.toDataURL();
-        localStorage.setItem('mySavedArt', canvasDataUrl);
-    } catch (e) {
-        console.warn("Manual save paused by CORS validation:", e);
-    }
+    const canvasDataUrl = canvas.toDataURL();
+    localStorage.setItem('mySavedArt', canvasDataUrl);
 });
 
 loadBtn.addEventListener('click', () => {
@@ -93,7 +89,6 @@ loadBtn.addEventListener('click', () => {
     if (!savedDataUrl) return; 
     
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -176,7 +171,6 @@ window.addEventListener('mouseup', () => {
 });
 
 let stampImage = new Image();
-stampImage.crossOrigin = 'anonymous';
 let isImageLoaded = false;
 stampImage.onload = () => { isImageLoaded = true; };
 
@@ -184,7 +178,6 @@ imageLoader.addEventListener('change', (e) => {
     const reader = new FileReader();
     reader.onload = (event) => {
         stampImage = new Image();
-        stampImage.crossOrigin = 'anonymous';
         stampImage.onload = () => { isImageLoaded = true; };
         stampImage.src = event.target.result;
     };
@@ -216,7 +209,6 @@ function resizeCanvas() {
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = () => {
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         };
@@ -233,12 +225,8 @@ brushType.addEventListener('change', () => {
 
 const resetTracking = () => {
     if (isDrawing) {
-        try {
-            const midSnapshot = canvas.toDataURL();
-            localStorage.setItem('mySavedArt', midSnapshot);
-        } catch (e) {
-            console.warn("Auto-save cache write paused by browser validation layers:", e);
-        }
+        const midSnapshot = canvas.toDataURL();
+        localStorage.setItem('mySavedArt', midSnapshot);
     }
     isDrawing = false;
     livePoints = [];
@@ -247,14 +235,10 @@ const resetTracking = () => {
 };
 
 canvas.addEventListener('mousedown', (e) => {
-    try {
-        const preSnapshot = canvas.toDataURL();
-        undoStack.push(preSnapshot);
-        if (undoStack.length > MAX_STATES) undoStack.shift();
-        redoStack = []; 
-    } catch (err) {
-        console.warn("Undo stack frame capture dropped due to unvetted source content context:", err);
-    }
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
+    if (undoStack.length > MAX_STATES) undoStack.shift();
+    redoStack = []; 
 
     isDrawing = true;
     livePoints = [];
@@ -354,14 +338,10 @@ window.addEventListener('keydown', (e) => {
 function drawCustomShape(x, y) {
     if (!isImageLoaded) return; 
 
-    try {
-        const preSnapshot = canvas.toDataURL();
-        undoStack.push(preSnapshot);
-        if (undoStack.length > MAX_STATES) undoStack.shift();
-        redoStack = [];
-    } catch (e) {
-        console.warn("Undo snapshot baseline omitted for stamp tool:", e);
-    }
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
+    if (undoStack.length > MAX_STATES) undoStack.shift();
+    redoStack = [];
 
     ctx.save();
     const dynamicSize = Number(brushSize.value) * 2.5; 
@@ -370,12 +350,8 @@ function drawCustomShape(x, y) {
     ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
     ctx.restore();
     
-    try {
-        const stampSnapshot = canvas.toDataURL();
-        localStorage.setItem('mySavedArt', stampSnapshot);
-    } catch (err) {
-        console.warn("Autosave state write omitted for stamp action:", err);
-    }
+    const stampSnapshot = canvas.toDataURL();
+    localStorage.setItem('mySavedArt', stampSnapshot);
 }
 
 class Shimeji {
@@ -479,10 +455,8 @@ class Shimeji {
 }
 
 clearBtn.addEventListener('click', () => {
-    try {
-        const preSnapshot = canvas.toDataURL();
-        undoStack.push(preSnapshot);
-    } catch (e) {}
+    const preSnapshot = canvas.toDataURL();
+    undoStack.push(preSnapshot);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
@@ -508,7 +482,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = () => {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -554,15 +527,12 @@ if (refImageLoader && refImagePreview) {
 function executeUndo() {
     if (undoStack.length === 0) return;
 
-    try {
-        const currentState = canvas.toDataURL();
-        redoStack.push(currentState);
-    } catch (e) {}
+    const currentState = canvas.toDataURL();
+    redoStack.push(currentState);
 
     const previousState = undoStack.pop();
     
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -570,9 +540,7 @@ function executeUndo() {
         
         const scale = window.devicePixelRatio || 1;
         ctx.scale(scale, scale);
-        try {
-            localStorage.setItem('mySavedArt', previousState);
-        } catch (e) {}
+        localStorage.setItem('mySavedArt', previousState);
     };
     img.src = previousState;
 }
@@ -581,12 +549,9 @@ function executeRedo() {
     if (redoStack.length === 0) return;
 
     const nextState = redoStack.pop();
-    try {
-        undoStack.push(canvas.toDataURL());
-    } catch (e) {}
+    undoStack.push(canvas.toDataURL());
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -594,9 +559,7 @@ function executeRedo() {
         
         const scale = window.devicePixelRatio || 1;
         ctx.scale(scale, scale);
-        try {
-            localStorage.setItem('mySavedArt', nextState);
-        } catch (e) {}
+        localStorage.setItem('mySavedArt', nextState);
     };
     img.src = nextState;
 }
