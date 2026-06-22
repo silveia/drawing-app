@@ -142,8 +142,8 @@ select {
     z-index: 3;
 }
 
-#gameBtn { bottom: 30px; }
-#referenceBtn { bottom: 90px; }
+#gameBtn { bottom: 27px; }
+#referenceBtn { bottom: 97px; }
 
 #gameIcon, #referenceIcon {
     width: 70%;           
