@@ -126,11 +126,11 @@ select {
 /* ==========================================================================
    4. FLOATING SCREEN SHORTCUT BUTTONS & IN-WINDOW ACTIONS
    ========================================================================== */
-#gameBtn, #browserBtn {
+#gameBtn, #referenceBtn {
     position: fixed;      
-    right: 30px;          
-    width: 44px;          
-    height: 44px;         
+    right: 27px;          
+    width: 50px;          
+    height: 50px;         
     background-color: #775F6C; 
     cursor: pointer;
     display: flex;
@@ -143,20 +143,20 @@ select {
 }
 
 #gameBtn { bottom: 30px; }
-#browserBtn { bottom: 90px; }
+#referenceBtn { bottom: 90px; }
 
-#gameIcon, #browserIcon {
+#gameIcon, #referenceIcon {
     width: 70%;           
     height: 70%;
     object-fit: contain;  
     image-rendering: pixelated; 
 }
 
-#gameBtn:hover, #browserBtn:hover {
+#gameBtn:hover, #referenceBtn:hover {
     transform: scale(1.05); 
 }
 
-#gameBtn:active, #browserBtn:active {
+#gameBtn:active, #referenceBtn:active {
     transform: scale(0.95); 
 }
 
