@@ -146,8 +146,8 @@ select {
 #referenceBtn { bottom: 97px; }
 
 #gameIcon, #referenceIcon {
-    width: 70%;           
-    height: 70%;
+    width: 77%;           
+    height: 77%;
     object-fit: contain;  
     image-rendering: pixelated; 
 }
@@ -163,33 +163,27 @@ select {
 /* Custom Square Reference Upload Button */
 #uploadBtn {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 10px;
+    right: 10px;
     z-index: 10; 
-    width: 44px;          
-    height: 44px;         
+    width: 30px;          
+    height: 30px;         
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    background-color: transparent !important;
-    border: none !important;
+    background-color: #775F6C;
     outline: none;
     border-radius: 0px; 
 }
 
 #uploadIcon {
-    width: 60%;           
-    height: 60%;
+    width: 75%;       
+    height: 75%;
     object-fit: contain;  
     image-rendering: pixelated; 
 }
-
-#uploadBtn:hover {
-    background-color: transparent !important;
-}
-
 
 
 /* ૢ 🗯.ꞋꞌꞋ✧.ּ ִֶָ ఌ.ּ ִֶָ ૢ⊹.ּ ⎙ 𝄞✦⟢𓂃⋆｡‧˚ʚ 𝐆𝐀𝐌𝐄 / 𝐌𝐈𝐍𝐈 𝐖𝐈𝐍𝐃𝐎𝐖 ɞ˚‧｡⋆𓂃⟢✦𝄞 * ꒷︶꒦︶ ୨୧ ︶꒦꒷ ୨ɞ꒷︶꒷꒥꒷✦ */
