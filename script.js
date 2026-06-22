@@ -16,7 +16,7 @@ const miniWindow = document.getElementById('miniWindow');
 const miniWindow2 = document.getElementById('miniWindow2');
 
 const gameBtn = document.getElementById('gameBtn'); 
-const browserBtn = document.getElementById('browserBtn'); 
+const referenceBtn = document.getElementById('referenceBtn'); 
 const closeWindowBtn = document.getElementById('closeWindowBtn');
 const closeWindowBtn2 = document.getElementById('closeWindowBtn2'); 
 const windowHeader = document.getElementById('windowHeader');
@@ -54,7 +54,7 @@ gameBtn.addEventListener('click', () => {
     miniWindow2.style.zIndex = '99';
 });
 
-browserBtn.addEventListener('click', () => {
+referenceBtn.addEventListener('click', () => {
     miniWindow2.classList.remove('hidden-window');
     miniWindow2.style.display = 'block';
     miniWindow2.style.zIndex = '100';
