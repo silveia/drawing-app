@@ -19,15 +19,13 @@ const gameBtn = document.getElementById('gameBtn');
 const referenceBtn = document.getElementById('referenceBtn'); 
 const closeWindowBtn = document.getElementById('closeWindowBtn');
 const closeWindowBtn2 = document.getElementById('closeWindowBtn2'); 
+const resetGameBtn = document.getElementById('resetGameBtn');
 const windowHeader = document.getElementById('windowHeader');
 const windowHeader2 = document.getElementById('windowHeader2'); 
 
 const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
 const startGameBtn = document.getElementById('startGameBtn');
-
-const saveBtn = document.getElementById('saveBtn');
-const loadBtn = document.getElementById('loadBtn');
 
 let isDrawing = false;
 let currentTool = 'round';
@@ -39,11 +37,23 @@ let undoStack = [];
 let redoStack = [];
 const MAX_STATES = 20; 
 
+// ==========================================================================
+// 1. WINDOW DRAGGING ENGINE STATE
+// ==========================================================================
+let isDraggingWindow = false;
+let isDraggingWindow2 = false;
+let offsetX = 0;
+let offsetY = 0;
+
+// ==========================================================================
+// 2. WINDOW OPEN / CLOSE & START CORE HANDLERS
+// ==========================================================================
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
     gameScreen.classList.remove('hidden-game-element');  
-    if (typeof initCustomGame === 'function') {
-        initCustomGame(); 
+    localStorage.setItem('gameActive', 'true');
+    if (typeof window.initCustomGame === 'function') {
+        window.initCustomGame(); 
     }
 });
 
@@ -52,6 +62,7 @@ gameBtn.addEventListener('click', () => {
     miniWindow.style.display = 'block'; 
     miniWindow.style.zIndex = '100';
     miniWindow2.style.zIndex = '99';
+    localStorage.setItem('gameWindowOpen', 'true');
 });
 
 referenceBtn.addEventListener('click', () => {
@@ -59,67 +70,28 @@ referenceBtn.addEventListener('click', () => {
     miniWindow2.style.display = 'block';
     miniWindow2.style.zIndex = '100';
     miniWindow.style.zIndex = '99';
+    localStorage.setItem('referenceWindowOpen', 'true');
 });
 
 closeWindowBtn.addEventListener('click', () => {
     miniWindow.classList.add('hidden-window'); 
-    startScreen.classList.remove('hidden-game-element'); 
-    gameScreen.classList.add('hidden-game-element');    
-    if (typeof stopCustomGame === 'function') {
-        stopCustomGame(); 
-    }
+    localStorage.setItem('gameWindowOpen', 'false');
 });
 
 closeWindowBtn2.addEventListener('click', () => {
     miniWindow2.classList.add('hidden-window');
     miniWindow2.style.display = 'none';
+    localStorage.setItem('referenceWindowOpen', 'false');
 });
 
-// ==========================================================================
-// 💾 FIXED PIXEL-PERFECT SAVE/LOAD ENGINE (CLEANED)
-// ==========================================================================
 
-if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-        console.log("💾 Save button successfully clicked!"); 
-        try {
-            const canvasDataUrl = canvas.toDataURL();
-            localStorage.setItem('mySavedArt', canvasDataUrl);
-            console.log("✅ Art snapshot committed to local storage.");
-        } catch (err) {
-            console.error("❌ Failed to stringify canvas state data:", err);
-        }
-    });
-} else {
-    console.warn("⚠️ Warning: element with id='saveBtn' was not detected in DOM during initialization.");
-}
+resetGameBtn.addEventListener('click', () => {
+    if (typeof window.teleportToSpawn === 'function') {
+        window.teleportToSpawn();
+    }
+});
 
-if (loadBtn) {
-    loadBtn.addEventListener('click', () => {
-        console.log("🔄 Load button successfully clicked!"); 
-        const savedDataUrl = localStorage.getItem('mySavedArt');
-        if (!savedDataUrl) {
-            console.warn("⚠️ Fetch complete: No artwork entry keys matching 'mySavedArt' exist in storage.");
-            return; 
-        }
-        
-        const img = new Image();
-        img.onload = () => {
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            const scale = window.devicePixelRatio || 1;
-            ctx.scale(scale, scale);
-            console.log("✅ Canvas state matrix successfully loaded and adjusted.");
-        };
-        img.onerror = (e) => console.error("❌ Failed to parse stored string asset back to dynamic image token.", e);
-        img.src = savedDataUrl;
-    });
-} else {
-    console.warn("⚠️ Warning: element with id='loadBtn' was not detected in DOM during initialization.");
-}
-
+// Z-Index focus management when clicking anywhere inside the frames
 miniWindow.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '100';
     miniWindow2.style.zIndex = '99';
@@ -130,52 +102,50 @@ miniWindow2.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '99';
 });
 
-let isDraggingWindow = false;
-let startX, startY, initialWindowLeft, initialWindowTop;
-
+// ==========================================================================
+// 3. GLITCH-FREE WINDOW MOVEMENTS
+// ==========================================================================
 windowHeader.addEventListener('mousedown', (e) => {
     isDraggingWindow = true;
-    startX = e.clientX;
-    startY = e.clientY;
+    offsetX = e.clientX - miniWindow.offsetLeft;
+    offsetY = e.clientY - miniWindow.offsetTop;
     
-    const rect = miniWindow.getBoundingClientRect();
-    initialWindowLeft = rect.left;
-    initialWindowTop = rect.top;
     windowHeader.style.backgroundColor = '#624D5A'; 
-
     miniWindow.style.zIndex = '100';
     miniWindow2.style.zIndex = '99';
 });
 
-let isDraggingWindow2 = false;
-let startX2, startY2, initialWindowLeft2, initialWindowTop2;
-
 windowHeader2.addEventListener('mousedown', (e) => {
     isDraggingWindow2 = true;
-    startX2 = e.clientX;
-    startY2 = e.clientY;
+    offsetX = e.clientX - miniWindow2.offsetLeft;
+    offsetY = e.clientY - miniWindow2.offsetTop;
     
-    const rect = miniWindow2.getBoundingClientRect();
-    initialWindowLeft2 = rect.left;
-    initialWindowTop2 = rect.top;
     windowHeader2.style.backgroundColor = '#624D5A'; 
-
     miniWindow.style.zIndex = '99';
     miniWindow2.style.zIndex = '100';
 });
 
 window.addEventListener('mousemove', (e) => {
     if (isDraggingWindow) {
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-        miniWindow.style.left = `${initialWindowLeft + deltaX}px`;
-        miniWindow.style.top = `${initialWindowTop + deltaY}px`;
+        const finalLeft = `${e.clientX - offsetX}px`;
+        const finalTop = `${e.clientY - offsetY}px`;
+        
+        miniWindow.style.left = finalLeft;
+        miniWindow.style.top = finalTop;
+        
+        localStorage.setItem('miniWindowLeft', finalLeft);
+        localStorage.setItem('miniWindowTop', finalTop);
     }
+    
     if (isDraggingWindow2) {
-        const deltaX = e.clientX - startX2;
-        const deltaY = e.clientY - startY2;
-        miniWindow2.style.left = `${initialWindowLeft2 + deltaX}px`;
-        miniWindow2.style.top = `${initialWindowTop2 + deltaY}px`;
+        const finalLeft2 = `${e.clientX - offsetX}px`;
+        const finalTop2 = `${e.clientY - offsetY}px`;
+        
+        miniWindow2.style.left = finalLeft2;
+        miniWindow2.style.top = finalTop2;
+        
+        localStorage.setItem('miniWindow2Left', finalLeft2);
+        localStorage.setItem('miniWindow2Top', finalTop2);
     }
 });
 
@@ -190,6 +160,16 @@ window.addEventListener('mouseup', () => {
     }
 });
 
+// Save explicit sizing properties whenever reference window scale adjustments end
+miniWindow2.addEventListener('mouseup', () => {
+    const rect = miniWindow2.getBoundingClientRect();
+    localStorage.setItem('miniWindow2Width', `${rect.width}px`);
+    localStorage.setItem('miniWindow2Height', `${rect.height}px`);
+});
+
+// ==========================================================================
+// 4. FILE & CANVAS IMAGE STORAGE AGENTS
+// ==========================================================================
 let stampImage = new Image();
 let isImageLoaded = false;
 stampImage.onload = () => { isImageLoaded = true; };
@@ -217,6 +197,23 @@ charLoader.addEventListener('change', (e) => {
     }
 });
 
+window.addEventListener('beforeunload', () => {
+    try {
+        const canvasDataUrl = canvas.toDataURL();
+        localStorage.setItem('mySavedArt', canvasDataUrl);
+        
+        if (typeof window.getCustomGameProgress === 'function') {
+            const progress = window.getCustomGameProgress(); 
+            localStorage.setItem('myGameProgressData', JSON.stringify(progress));
+        }
+    } catch (err) {
+        console.error("Failed to auto-save canvas or game state on departure:", err);
+    }
+});
+
+// ==========================================================================
+// 5. WINDOW LIFECYCLE & CANVAS SCALE INTERFACES
+// ==========================================================================
 function resizeCanvas() {
     const scale = window.devicePixelRatio || 1; 
     const targetWidth = container ? container.clientWidth : (canvas.clientWidth || 800);
@@ -253,12 +250,33 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 
-// ==========================================================================
-// 💾 RELIABLE STARTUP ARTWORK RESTORATION
-// ==========================================================================
-
 window.addEventListener('load', () => {
     resizeCanvas(); 
+
+    // --- Restore Window 1 (Game Area Layout) ---
+    const savedLeft1 = localStorage.getItem('miniWindowLeft');
+    const savedTop1 = localStorage.getItem('miniWindowTop');
+    if (savedLeft1 && savedTop1) {
+        miniWindow.style.left = savedLeft1;
+        miniWindow.style.top = savedTop1;
+    }
+
+    // --- Restore Window 2 (Reference Panel Spatial Dimensions) ---
+    const savedLeft2 = localStorage.getItem('miniWindow2Left');
+    const savedTop2 = localStorage.getItem('miniWindow2Top');
+    const savedWidth2 = localStorage.getItem('miniWindow2Width');
+    const savedHeight2 = localStorage.getItem('miniWindow2Height');
+    
+    if (savedLeft2 && savedTop2) {
+        miniWindow2.style.left = savedLeft2;
+        miniWindow2.style.top = savedTop2;
+    }
+    if (savedWidth2 && savedHeight2) {
+        miniWindow2.style.width = savedWidth2;
+        miniWindow2.style.height = savedHeight2;
+    }
+
+    // Canvas Image Map Reconstruction
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
@@ -266,14 +284,26 @@ window.addEventListener('load', () => {
             ctx.setTransform(1, 0, 0, 1, 0, 0); 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-            
             const scale = window.devicePixelRatio || 1;
             ctx.scale(scale, scale);
         };
         img.src = savedDataUrl;
     }
+
+    if (localStorage.getItem('referenceWindowOpen') === 'true') {
+        miniWindow2.classList.remove('hidden-window');
+        miniWindow2.style.display = 'block';
+    }
+
+    if (localStorage.getItem('gameWindowOpen') === 'true') {
+        miniWindow.classList.remove('hidden-window'); 
+        miniWindow.style.display = 'block'; 
+    }
 });
 
+// ==========================================================================
+// 6. DRAWING APPLICATION CONTROLS & ENGINE
+// ==========================================================================
 brushType.addEventListener('change', () => {
     currentTool = brushType.value;
 });
@@ -405,6 +435,9 @@ function drawCustomShape(x, y) {
     localStorage.setItem('mySavedArt', stampSnapshot);
 }
 
+// ==========================================================================
+// 7. ENVIRONMENT COMPONENT AGENTS (SHIMEJI)
+// ==========================================================================
 class Shimeji {
     constructor() {
         this.x = Math.random() * (window.innerWidth - 100);
@@ -512,7 +545,7 @@ clearBtn.addEventListener('click', () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
-{}});
+});
 
 spawnBtn.addEventListener('click', () => {
     if (!isCharImageLoaded) {
@@ -528,72 +561,36 @@ function animationTick() {
 }
 requestAnimationFrame(animationTick);
 
-const refWindowBtn = document.getElementById('uploadBtn');
-const refImageLoader = document.getElementById('windowImageLoader');
-const refImagePreview = document.getElementById('windowImagePreview');
-const refPlaceholder = document.getElementById('uploadPlaceholder');
-
-if (refWindowBtn && refImageLoader) {
-    refWindowBtn.addEventListener('click', () => {
-        refImageLoader.click();
-    });
-}
-
-if (refImageLoader && refImagePreview) {
-    refImageLoader.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                refImagePreview.src = event.target.result;
-                refImagePreview.style.display = 'block';
-                if (refPlaceholder) {
-                    refPlaceholder.style.display = 'none';
-                }
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    });
-}
-
+// ==========================================================================
+// 8. BACKWARD / FORWARD HISTORICAL STATES (UNDO/REDO)
+// ==========================================================================
 function executeUndo() {
     if (undoStack.length === 0) return;
-
     const currentState = canvas.toDataURL();
     redoStack.push(currentState);
-
     const previousState = undoStack.pop();
-    
     const img = new Image();
     img.onload = () => {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
         const scale = window.devicePixelRatio || 1;
         ctx.scale(scale, scale);
-        localStorage.setItem('mySavedArt', previousState);
     };
     img.src = previousState;
 }
 
 function executeRedo() {
     if (redoStack.length === 0) return;
-
     const nextState = redoStack.pop();
     undoStack.push(canvas.toDataURL());
-
     const img = new Image();
     img.onload = () => {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
         const scale = window.devicePixelRatio || 1;
         ctx.scale(scale, scale);
-        localStorage.setItem('mySavedArt', nextState);
     };
     img.src = nextState;
 }
