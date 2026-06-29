@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. GLOBAL STYLES & LAYOUT
+   1. GLOBAL PAGE LAYOUT & BACKGROUND
    ========================================================================== */
 body {
     margin: 0;
@@ -11,6 +11,9 @@ body {
     font-family: 'Pixelify Sans', sans-serif;
 }
 
+/* ==========================================================================
+   2. DRAWING WORKSPACE (CANVAS)
+   ========================================================================== */
 #canvas-container {
     position: relative;
     margin-top: 20px;
@@ -29,7 +32,7 @@ canvas {
 }
 
 /* ==========================================================================
-   2. TOOLBAR & UI CONTROLS
+   3. APP TOOLBAR COMPONENTS
    ========================================================================== */
 #toolbar {
     background-color: #49393F;
@@ -83,9 +86,7 @@ select {
     padding-right: 25px; 
 }
 
-/* ==========================================================================
-   3. COLOR PICKER CUSTOMIZATION
-   ========================================================================== */
+/* --- Rounded Color Picker Asset --- */
 #colorPicker {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -123,7 +124,7 @@ select {
 }
 
 /* ==========================================================================
-   4. FLOATING SCREEN SHORTCUT BUTTONS & WINDOWS
+   4. FLOATING PERSISTENT WINDOW INTERFACE BUTTONS
    ========================================================================== */
 #gameBtn, #referenceBtn {
     position: fixed;      
@@ -154,6 +155,7 @@ select {
 #gameBtn:hover, #referenceBtn:hover { transform: scale(1.05); }
 #gameBtn:active, #referenceBtn:active { transform: scale(0.95); }
 
+/* Reference Header Upload Button */
 #uploadBtn {
     position: absolute;
     top: 10px;
@@ -178,6 +180,9 @@ select {
     image-rendering: pixelated; 
 }
 
+/* ==========================================================================
+   5. MODAL SYSTEM MINI-WINDOWS
+   ========================================================================== */
 #miniWindow, #miniWindow2 {
     position: fixed;
     background-color: #E7E3E5;
@@ -224,7 +229,7 @@ select {
     gap: 4px;
 }
 
-#closeWindowBtn, #resetGameBtn, #closeWindowBtn2 {
+#closeWindowBtn, #resetGameBtn, #toggleFullscreen, #closeWindowBtn2 {
     background-color: #775F6C;
     border: 1px solid white;
     border-radius: 0;
@@ -238,6 +243,7 @@ select {
 
 #closeWindowBtn:hover, #closeWindowBtn2:hover { background-color: #A04650; }
 #resetGameBtn:hover { background-color: #55A070; }
+#toggleFullscreen:hover { background-color: #736ca3; }
 
 #windowContent {
     padding: 15px;
@@ -258,67 +264,6 @@ select {
     padding: 15px 35px;
     font-size: 20px;
     letter-spacing: 1px;
-}
-
-#gameViewport {
-    position: absolute;
-    top: 33px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #000;
-    overflow: hidden;
-}
-
-#gameWorldBackground {
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    /* silvia - change pixel size here */
-    width: 1024px;  
-    height: 1024px;
-
-    transform-origin: top left;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    background-image: url('map.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-}
-
-
-.map-tree {
-    position: absolute;
-    width: 64px;               
-    height: 96px;              
-    background-image: url('tree.png'); 
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
-    pointer-events: none;      
-    transform: translate(-50%, -100%); 
-}
-
-#gamePlayer {
-    
-    position: absolute;
-    /* 🌟 FIX: Force structural dimensions to exactly match one sprite cell */
-    width: 32px;  
-    height: 32px; 
-    
-    background-image: url('player.png');
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
-    overflow: hidden;
-    
-    left: 50%;
-    top: 50%;
-
-    transform: translate(-50%, -50%) scale(2);    z-index: 20;
-    
-    /* Start directly on row 5 frame 0 */
-    background-position: 0px -160px; 
 }
 
 .windowContent2 {
@@ -346,19 +291,194 @@ select {
     position: absolute;
     pointer-events: none;
 }
+/* ==========================================================================
+   6. RPG GAME ENGINE VIEWPORT & HARDWARE CSS SCALE
+   ========================================================================== */
+#gameViewport {
+    position: absolute;     /* 🌟 Change from relative to absolute pinning */
+    top: 32px;              /* 🌟 Adjust this number to match the exact height of your "game" header title bar */
+    left: 0;
+    right: 0;
+    bottom: 0;              /* 🌟 Clips perfectly to the bottom edge of your mini-window wrapper */
+    overflow: hidden;
+    background-color: #000;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: block;
+}
+
+/* 🌟 Ensure fullscreen mode ignores the window wrapper bounds completely */
+#gameViewport:fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#gameViewport:-webkit-full-screen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
 
 /* ==========================================================================
-   5. ENVIRONMENT EXTRAS
+   7. GAME WORLD ENTITIES, LAYER DECORATIONS & SPRITES
+   ========================================================================== */
+#gameWorldBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1024px;
+    height: 1024px;
+    background-image: url('map.png'); 
+    background-size: 1024px 1024px;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    transform-origin: top left;
+    margin: 0;
+    padding: 0;
+}
+
+#gamePlayer {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('player.png'); 
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    pointer-events: none;
+}
+
+.map-coin {
+    position: absolute;
+    width: 48px;   
+    height: 48px;  
+    image-rendering: pixelated; 
+    image-rendering: crisp-edges;
+    pointer-events: none;       
+    transform-origin: center center;
+}
+
+#coinCounterDisplay {
+    position: absolute;
+    /* 🌟 SHIFTED DOWN: Moved from 10px to 45px to clear your title header bar completely */
+    top: 10px;
+    /* 🌟 SHIFTED INWARD: Moved to 15px so it doesn't hug the left edge asset line */
+    left: 10px;
+    background-color: #000;
+    color: #fff;
+    font-size: 12px;                 /* Slightly smaller base text size to fit cleanly */
+    font-weight: bold;
+    padding: 3px 7px;
+    
+    /* 🌟 HIGH VISIBILITY: Higher index and crisp scale ensures it stays crisp in windowed mode */
+    z-index: 999999; 
+    pointer-events: none; 
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.coin-icon {
+    font-size: 16px;
+}
+
+.map-tree {
+    position: absolute;
+    width: 64px;               
+    height: 96px;              
+    background-image: url('tree.png'); 
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    pointer-events: none;      
+    transform: translate(-50%, -100%); /* Keeps trunk base centered on its target coordinate coordinate point */
+    transform-origin: bottom center; 
+}
+
+/* ==========================================================================
+   8. MISC EFFECTS, UTILITIES & OVERLAYS
    ========================================================================== */
 .shimeji-char {
     position: fixed;
-    width: 100px;
-    height: 100px;
-    pointer-events: none; 
-    user-select: none;
-    z-index: 5;
+    width: 64px;
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.fullscreen-mode {
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 99999;
+    background-color: #000;
 }
 
 .hidden-window, .hidden-game-element {
     display: none !important;
+}
+
+/* 🌟 FULLSCREEN DISPLAY SCALING: Automatically blows up the counter UI when in full monitor mode! */
+#gameViewport:fullscreen #coinCounterDisplay {
+    top: 30px;          /* Shoved down slightly further on big monitors */
+    left: 30px;         /* Shoved inward further for a clean gap */
+    font-size: 28px;    /* 🌟 Doubles the text size */
+    padding: 8px 16px;  /* Makes the backing box chunky */
+    gap: 8px;
+}
+
+#gameViewport:fullscreen .coin-icon {
+    font-size: 32px;    /* 🌟 Doubles the coin emoji size */
+}
+
+/* Webkit vendor prefix helper for browser compatibility (Safari/Chrome older engines) */
+#gameViewport:-webkit-full-screen #coinCounterDisplay {
+    top: 30px;
+    left: 30px;
+    font-size: 28px;
+    padding: 8px 16px;
+    gap: 8px;
+}
+#gameViewport:-webkit-full-screen .coin-icon {
+    font-size: 32px;
+}
+
+/* 🌟 FISH PARTICLE STYLE */
+.fish-particle {
+    position: absolute;
+    width: 20px;   /* Size of the tiny fish */
+    height: 20px;
+    pointer-events: none; /* Make sure clicking through them still lets you play */
+    z-index: 9999999;
+    animation: fishFountainAnim 0.8s ease-out forwards;
+}
+
+@keyframes fishFountainAnim {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        /* This pushes the particles outward, drops them down like gravity, and fades them out */
+        transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(var(--rot));
+        opacity: 0;
+    }
 }
