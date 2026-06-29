@@ -48,7 +48,8 @@
         <div id="windowHeader">
             <span>game</span>
             <div>
-                <button id="resetGameBtn">↺</button>
+                <button id="toggleFullscreen">▪</button>
+                <button id="resetGameBtn">↻</button>
                 <button id="closeWindowBtn">⨉</button>
             </div>
         </div>
@@ -58,9 +59,14 @@
             </div>
             <div id="gameScreen" class="hidden-game-element">
             <div id="gameViewport">
+                <div id="coinCounterDisplay">
+                        <span class="coin-icon">🪙</span> x <span id="coinScoreValue">0</span>
+                    </div>
                 <div id="gameWorldBackground">
                     <div id="gamePlayer"></div>
-                    </div> </div>
+                    
+
+                    </div>
             </div>
         </div> 
     </div>
