@@ -22,15 +22,13 @@
         </div>
     
         <div class="toolbar-group">
-            <label class="uploadBtn" for="imageLoader">upload stamp [shift]</label>
+            <label class="uploadBtn" for="imageLoader">upload stamp</label>
             <input type="file" id="imageLoader" accept="image/*">
     
             <label class="uploadBtn" for="charLoader">upload sprite</label>
             <input type="file" id="charLoader" accept="image/*" style="display: none;">
             
             <button id="spawnBtn">spawn sprite</button>
-            <button id="saveBtn">save</button>
-            <button id="loadBtn">load</button>
             <button id="clearBtn">clear</button>
             
             <button id="gameBtn" aria-label="Open Game Window">
@@ -48,30 +46,29 @@
 
     <div id="miniWindow" class="hidden-window">
         <div id="windowHeader">
-            <span id="windowTitle">game</span>
-            <button id="closeWindowBtn">X</button>
+            <span>game</span>
+            <div>
+                <button id="resetGameBtn">↺</button>
+                <button id="closeWindowBtn">⨉</button>
+            </div>
         </div>
-
         <div id="windowContent">
             <div id="startScreen">
                 <button id="startGameBtn">start</button>
             </div>
-
             <div id="gameScreen" class="hidden-game-element">
-                <div style="font-family: monospace; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px;">
-                    score: <span id="currentScore">0</span>
-                </div>
-                <div style="width: 100%; height: 400px; background-color: white; border: 2px solid #49393F; position: relative; overflow: hidden;">
-                    <div id="gameTarget" style="width: 30px; height: 30px; background-color: #775F6C; border: 1px solid white; position: absolute; cursor: pointer;"></div>
-                </div>
+            <div id="gameViewport">
+                <div id="gameWorldBackground">
+                    <div id="gamePlayer"></div>
+                    </div> </div>
             </div>
         </div> 
     </div>
 
-    <div id="miniWindow2" class="hidden-window" style="display: none; position: fixed; width: 400px; height: 400px;">
-        <div id="windowHeader2" style="background-color: #49393F; padding: 5px; cursor: move;">
+    <div id="miniWindow2" class="hidden-window">
+        <div id="windowHeader2">
             <span>reference</span>
-            <button id="closeWindowBtn2">X</button>
+            <button id="closeWindowBtn2">⨉</button>
         </div>
         
         <div class="windowContent2">
@@ -85,10 +82,6 @@
         </div>
     </div>
 
-    <script>
-        window.initCustomGame = window.initCustomGame || function() { console.log("Placeholder game setup run!"); };
-        window.stopCustomGame = window.stopCustomGame || function() { console.log("Placeholder game teardown run!"); };
-    </script>
     <script src="game.js"></script>   
     <script src="script.js"></script> 
 </body>
