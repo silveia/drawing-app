@@ -37,6 +37,11 @@ let undoStack = [];
 let redoStack = [];
 const MAX_STATES = 20; 
 
+// 🌟 TRACKING VARIABLES FOR EASTER EGG FISH FOUNTAIN
+let isTKeyPressed = false;
+let htmlFishParticles = [];
+let spawnCooldown = 0; // 🌟 NEW: Controls how rapidly the fish sprout
+
 // ==========================================================================
 // 1. WINDOW DRAGGING ENGINE STATE
 // ==========================================================================
@@ -84,14 +89,12 @@ closeWindowBtn2.addEventListener('click', () => {
     localStorage.setItem('referenceWindowOpen', 'false');
 });
 
-
 resetGameBtn.addEventListener('click', () => {
     if (typeof window.teleportToSpawn === 'function') {
         window.teleportToSpawn();
     }
 });
 
-// Z-Index focus management when clicking anywhere inside the frames
 miniWindow.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '100';
     miniWindow2.style.zIndex = '99';
@@ -160,7 +163,6 @@ window.addEventListener('mouseup', () => {
     }
 });
 
-// Save explicit sizing properties whenever reference window scale adjustments end
 miniWindow2.addEventListener('mouseup', () => {
     const rect = miniWindow2.getBoundingClientRect();
     localStorage.setItem('miniWindow2Width', `${rect.width}px`);
@@ -253,7 +255,6 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('load', () => {
     resizeCanvas(); 
 
-    // --- Restore Window 1 (Game Area Layout) ---
     const savedLeft1 = localStorage.getItem('miniWindowLeft');
     const savedTop1 = localStorage.getItem('miniWindowTop');
     if (savedLeft1 && savedTop1) {
@@ -261,7 +262,6 @@ window.addEventListener('load', () => {
         miniWindow.style.top = savedTop1;
     }
 
-    // --- Restore Window 2 (Reference Panel Spatial Dimensions) ---
     const savedLeft2 = localStorage.getItem('miniWindow2Left');
     const savedTop2 = localStorage.getItem('miniWindow2Top');
     const savedWidth2 = localStorage.getItem('miniWindow2Width');
@@ -276,7 +276,6 @@ window.addEventListener('load', () => {
         miniWindow2.style.height = savedHeight2;
     }
 
-    // Canvas Image Map Reconstruction
     const savedDataUrl = localStorage.getItem('mySavedArt');
     if (savedDataUrl) {
         const img = new Image();
@@ -299,6 +298,11 @@ window.addEventListener('load', () => {
         miniWindow.classList.remove('hidden-window'); 
         miniWindow.style.display = 'block'; 
     }
+
+    const gameContainer = document.getElementById('gameViewport');
+    if (gameContainer) {
+        gameContainer.classList.remove('fullscreen-mode');
+    }
 });
 
 // ==========================================================================
@@ -316,6 +320,8 @@ const resetTracking = () => {
 };
 
 canvas.addEventListener('mousedown', (e) => {
+    if (isTKeyPressed) return;
+
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
     if (undoStack.length > MAX_STATES) undoStack.shift();
@@ -350,6 +356,44 @@ canvas.addEventListener('mousedown', (e) => {
 
 window.addEventListener('mouseup', resetTracking);
 
+// 🌟 UPDATED: Spawns EVEN LARGER fish elements (80px width)
+function spawnFloatingFish() {
+    const rect = canvas.getBoundingClientRect();
+    
+    const spawnX = rect.left + mouseX;
+    const spawnY = rect.top + mouseY;
+
+    const fish = document.createElement('img');
+    fish.src = 'fish.png'; 
+    
+    fish.style.position = 'fixed';
+    fish.style.left = `${spawnX}px`;
+    fish.style.top = `${spawnY}px`;
+    fish.style.width = '80px'; // 🌟 UPDATED: Changed from 48px to 80px to make them much bigger!
+    fish.style.height = 'auto';
+    fish.style.pointerEvents = 'none';
+    fish.style.zIndex = '9999999';
+    
+    // Updated centering offsets matching the new 80px width
+    fish.style.marginTop = '-40px';
+    fish.style.marginLeft = '-40px';
+    
+    document.body.appendChild(fish);
+
+    const angle = (Math.random() * Math.PI) + Math.PI; 
+    const speed = (Math.random() * 5) + 3;
+
+    htmlFishParticles.push({
+        element: fish,
+        x: spawnX,
+        y: spawnY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() * 8) - 4
+    });
+}
+
 function draw(e) {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -358,7 +402,7 @@ function draw(e) {
     mouseX = x;
     mouseY = y;
 
-    if (!isDrawing) return;        
+    if (!isDrawing || isTKeyPressed) return;        
     
     if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -399,6 +443,10 @@ function draw(e) {
 window.addEventListener('mousemove', draw);
 
 window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 't') {
+        isTKeyPressed = true;
+    }
+
     if (e.key === 'Shift') {
         if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
             drawCustomShape(mouseX, mouseY);
@@ -416,8 +464,14 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+window.addEventListener('keyup', (e) => {
+    if (e.key.toLowerCase() === 't') {
+        isTKeyPressed = false;
+    }
+});
+
 function drawCustomShape(x, y) {
-    if (!isImageLoaded) return; 
+    if (!isImageLoaded || isTKeyPressed) return; 
 
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
@@ -425,10 +479,23 @@ function drawCustomShape(x, y) {
     redoStack = [];
 
     ctx.save();
-    const dynamicSize = Number(brushSize.value) * 2.5; 
-    const targetX = x - (dynamicSize / 2);
-    const targetY = y - (dynamicSize / 2);
-    ctx.drawImage(stampImage, targetX, targetY, dynamicSize, dynamicSize);
+    
+    const baseSize = Number(brushSize.value) * 2.5; 
+
+    const aspect = stampImage.width / stampImage.height;
+    let targetWidth = baseSize;
+    let targetHeight = baseSize;
+
+    if (aspect > 1) {
+        targetHeight = baseSize / aspect;
+    } else {
+        targetWidth = baseSize * aspect;
+    }
+
+    const targetX = x - (targetWidth / 2);
+    const targetY = y - (targetHeight / 2);
+    
+    ctx.drawImage(stampImage, targetX, targetY, targetWidth, targetHeight);
     ctx.restore();
     
     const stampSnapshot = canvas.toDataURL();
@@ -436,7 +503,7 @@ function drawCustomShape(x, y) {
 }
 
 // ==========================================================================
-// 7. ENVIRONMENT COMPONENT AGENTS (SHIMEJI)
+// 7. ENVIRONMENT COMPONENT AGENTS (SHIMEJI) & FLOATING EASTER EGG TIMERS
 // ==========================================================================
 class Shimeji {
     constructor() {
@@ -555,8 +622,45 @@ spawnBtn.addEventListener('click', () => {
     characters.push(new Shimeji());
 });
 
+// ==========================================================================
+// MAIN RUNTIME TICK ENGINE
+// ==========================================================================
 function animationTick() {
     characters.forEach(char => char.update());
+
+    // 🌟 UPDATED: Slowed down spawning rate using a frame counter cooldown
+    if (isTKeyPressed) {
+        spawnCooldown++;
+        if (spawnCooldown % 5 === 0) { // Spawns 1 fish every 5 loop ticks instead of every frame
+            spawnFloatingFish();
+        }
+    } else {
+        spawnCooldown = 0;
+    }
+
+    if (htmlFishParticles.length > 0) {
+        // Loop backwards through the array to prevent glitchy jumps when slicing elements out
+        for (let i = htmlFishParticles.length - 1; i >= 0; i--) {
+            const p = htmlFishParticles[i];
+            
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.25;             
+            p.rotation += p.rotSpeed; 
+
+            p.element.style.left = `${p.x}px`;
+            p.element.style.top = `${p.y}px`;
+            p.element.style.transform = `rotate(${p.rotation}deg)`;
+            // 🌟 UPDATED: p.alpha transparency drop code completely removed so they never fade!
+
+            // 🌟 UPDATED: Removes fish from memory only when they fall completely past the viewport floor layout line
+            if (p.y > window.innerHeight + 100) {
+                p.element.remove();
+                htmlFishParticles.splice(i, 1);
+            }
+        }
+    }
+
     requestAnimationFrame(animationTick);
 }
 requestAnimationFrame(animationTick);
@@ -594,3 +698,17 @@ function executeRedo() {
     };
     img.src = nextState;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const fsBtn = document.getElementById('toggleFullscreen');
+    if (fsBtn) {
+        fsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof window.toggleFullscreen === 'function') {
+                window.toggleFullscreen();
+            } else {
+                console.error("The toggleFullscreen function is not defined in game.js yet!");
+            }
+        });
+    }
+});
