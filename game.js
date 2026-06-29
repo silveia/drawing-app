@@ -4,15 +4,26 @@
 const bgWorld = document.getElementById('gameWorldBackground');
 const playerEl = document.getElementById('gamePlayer');
 
+
+
+
+let visualHitboxEl = null; // Add this with your other global variables
+
+
+
+
+
+
 let isPlaying = false;
 let gameLoopId = null;
 
 let coinPositions = []; 
 const MAX_COINS = 20;   
 let coinAnimTimer = 0;  
-let playerCoins = 0;    // 🌟 NEW: Tracks your current score state
+let playerCoins = 0;    
 
 let keyHistory = [];
+let lastHorizontalFacing = 'd'; // TRACKER: Keeps her facing the right way even after keys are released
 
 let worldPlayerX = 512;
 let worldPlayerY = 512;
@@ -73,6 +84,7 @@ function spawnCoinOutsideView() {
     if (coinPositions.length >= MAX_COINS) return;
     const mapSize = 1024;
     const coinSize = 24;
+    const MIN_COIN_DISTANCE = 60; // 🌟 Must match the initial spawn distance spacing
 
     const visibleMinX = worldPlayerX - (viewWidth / 2);
     const visibleMaxX = worldPlayerX + (viewWidth / 2);
@@ -100,7 +112,20 @@ function spawnCoinOutsideView() {
                 break;
             }
         }
-        if (!isVisible && isWalkable) validLocation = true;
+        if (isVisible || !isWalkable) continue;
+
+        // 🌟 ADDED: Check distance against existing coins for dynamic spawning
+        let tooCloseToOtherCoin = false;
+        for (let existingCoin of coinPositions) {
+            const dx = spawnX - existingCoin.x;
+            const dy = spawnY - existingCoin.y;
+            if (Math.sqrt(dx * dx + dy * dy) < MIN_COIN_DISTANCE) {
+                tooCloseToOtherCoin = true;
+                break;
+            }
+        }
+
+        if (!tooCloseToOtherCoin) validLocation = true;
     }
 
     if (!validLocation) return;
@@ -132,6 +157,8 @@ function spawnTrees() {
 
 function spawnInitialCoins() {
     const mapSize = 1024;
+    const MIN_COIN_DISTANCE = 60; // 🌟 Adjust this number to change how spread out they are
+
     while (coinPositions.length < MAX_COINS) {
         let validLocation = false, spawnX = 0, spawnY = 0, attempts = 0;
         while (!validLocation && attempts < 100) {
@@ -144,6 +171,7 @@ function spawnInitialCoins() {
             if (spawnX < 140 || spawnX > 880 || spawnY < 140 || spawnY > 860) continue; 
 
             let isWalkable = true;
+            // Check barriers
             for (let barrier of mapBarriers) {
                 if (spawnX < barrier.x + barrier.width + 20 && spawnX + 24 > barrier.x - 20 &&
                     spawnY < barrier.y + barrier.height + 20 && spawnY + 24 > barrier.y - 20) {
@@ -151,7 +179,20 @@ function spawnInitialCoins() {
                     break;
                 }
             }
-            if (isWalkable) validLocation = true;
+            if (!isWalkable) continue;
+
+            // 🌟 ADDED: Check distance against all already spawned coins
+            let tooCloseToOtherCoin = false;
+            for (let existingCoin of coinPositions) {
+                const dx = spawnX - existingCoin.x;
+                const dy = spawnY - existingCoin.y;
+                if (Math.sqrt(dx * dx + dy * dy) < MIN_COIN_DISTANCE) {
+                    tooCloseToOtherCoin = true;
+                    break;
+                }
+            }
+
+            if (!tooCloseToOtherCoin) validLocation = true;
         }
         if (!validLocation) continue;
         const world = document.getElementById('gameWorldBackground');
@@ -210,17 +251,33 @@ function runGameTick() {
         isMoving = true;
     }
 
+    if (keysPressed.a) lastHorizontalFacing = 'a';
+    if (keysPressed.d) lastHorizontalFacing = 'd';
+
+    let diagonalOverrideFlip = null;
+
     if (keyHistory.length > 0) {
-        if (keysPressed.w && keysPressed.d) { playerRow = 3; } 
-        else if (keysPressed.w && keysPressed.a) { playerRow = 3; } 
-        else if (keysPressed.s && keysPressed.d) { playerRow = 4; } 
-        else if (keysPressed.s && keysPressed.a) { playerRow = 4; }
+        if (keysPressed.w && keysPressed.d) { 
+            playerRow = 3; 
+            diagonalOverrideFlip = 'scale(2, 2)';  
+        } 
+        else if (keysPressed.w && keysPressed.a) { 
+            playerRow = 3; 
+            diagonalOverrideFlip = 'scale(-2, 2)'; 
+        } 
+        else if (keysPressed.s && keysPressed.d) { 
+            playerRow = 4; 
+            diagonalOverrideFlip = 'scale(-2, 2)'; 
+        } 
+        else if (keysPressed.s && keysPressed.a) { 
+            playerRow = 4; 
+            diagonalOverrideFlip = 'scale(2, 2)';  
+        }
         else {
             const currentFacingKey = keyHistory[keyHistory.length - 1];
             if (currentFacingKey === 'w') { playerRow = 6; } 
             else if (currentFacingKey === 's') { playerRow = 5; } 
-            else if (currentFacingKey === 'a') { playerRow = 2; } 
-            else if (currentFacingKey === 'd') { playerRow = 2; }
+            else if (currentFacingKey === 'a' || currentFacingKey === 'd') { playerRow = 2; }
         }
     }
 
@@ -282,6 +339,7 @@ function runGameTick() {
     if (camX > -minScrollLimitX) camX = -minScrollLimitX;
     if (camY > -minScrollLimitY) camY = -minScrollLimitY;
 
+    if (camX < -maxMapScrollX) cancelAnimationFrame(gameLoopId);
     if (camX < -maxMapScrollX) camX = -maxMapScrollX;
     if (camY < -maxMapScrollY) camY = -maxMapScrollY;
 
@@ -295,17 +353,14 @@ function runGameTick() {
     playerEl.style.top = `${worldPlayerY}px`;
     playerEl.style.zIndex = Math.floor(worldPlayerY + 16);
 
-    let facingDirectionTransform = 'scale(2)';
-    if (keyHistory.length > 0) {
-        if (keysPressed.w && keysPressed.d) facingDirectionTransform = 'scale(2, 2)';
-        else if (keysPressed.w && keysPressed.a) facingDirectionTransform = 'scale(-2, 2)';
-        else if (keysPressed.s && keysPressed.d) facingDirectionTransform = 'scale(-2, 2)';
-        else if (keysPressed.s && keysPressed.a) facingDirectionTransform = 'scale(2, 2)';
-        else {
-            const currentFacingKey = keyHistory[keyHistory.length - 1];
-            if (currentFacingKey === 'w' || currentFacingKey === 's') facingDirectionTransform = 'scale(2)';
-            else if (currentFacingKey === 'a') facingDirectionTransform = 'scale(2, 2)';
-            else if (currentFacingKey === 'd') facingDirectionTransform = 'scale(-2, 2)';
+    let facingDirectionTransform = 'scale(2, 2)';
+    if (diagonalOverrideFlip) {
+        facingDirectionTransform = diagonalOverrideFlip;
+    } else {
+        if (lastHorizontalFacing === 'd') {
+            facingDirectionTransform = 'scale(-2, 2)'; 
+        } else if (lastHorizontalFacing === 'a') {
+            facingDirectionTransform = 'scale(2, 2)';  
         }
     }
     playerEl.style.transform = `translate(-50%, -50%) ${facingDirectionTransform}`;
@@ -320,14 +375,28 @@ function runGameTick() {
             coin.element.src = `${baseSrc}?v=${Date.now()}_${Math.random()}`;
         });
     }
+    const playerCenterX = playerEl.offsetLeft;
+    const playerCenterY = playerEl.offsetTop; 
+
+    // Update and hide the visual debugging circle
+    if (visualHitboxEl) {
+        visualHitboxEl.style.left = `${playerCenterX - 20}px`;
+        visualHitboxEl.style.top = `${playerCenterY - 20}px`;
+        visualHitboxEl.style.zIndex = Math.floor(worldPlayerY + 17);
+        visualHitboxEl.style.display = 'none'; // 🌟 ADD THIS LINE TO MAKE IT INVISIBLE
+    }
 
     coinPositions = coinPositions.filter(coin => {
-        const dx = worldPlayerX - (coin.x + 12);
-        const dy = (worldPlayerY + 12) - (coin.y + 12);
-        if (Math.sqrt(dx * dx + dy * dy) < 26) { 
+        const coinCenterX = coin.element.offsetLeft + (coin.element.offsetWidth / 2);
+        const coinCenterY = coin.element.offsetTop + (coin.element.offsetHeight / 2);
+
+        const dx = playerCenterX - coinCenterX;
+        const dy = playerCenterY - coinCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 20) { 
             coin.element.remove(); 
             
-            // 🌟 NEW: Increment score counter state and update layout overlay string
             playerCoins++;
             const counterLabel = document.getElementById('coinScoreValue');
             if (counterLabel) counterLabel.innerText = playerCoins;
@@ -349,6 +418,7 @@ window.initCustomGame = function() {
 
     for (let key in keysPressed) keysPressed[key] = false;
     keyHistory = []; 
+    lastHorizontalFacing = 'd'; 
     
     updateViewportDimensions();
     
@@ -358,7 +428,6 @@ window.initCustomGame = function() {
     animFrame = 0;
     animTimer = 0;
 
-    // 🌟 NEW: Reset the score to 0 upon startup/restart clicks
     playerCoins = 0;
     const counterLabel = document.getElementById('coinScoreValue');
     if (counterLabel) counterLabel.innerText = playerCoins;
@@ -367,6 +436,22 @@ window.initCustomGame = function() {
     document.querySelectorAll('.map-coin').forEach(c => c.remove());
     coinPositions = []; 
     spawnInitialCoins(); 
+
+
+    // 🌟 ADD THIS: Create the visual hitbox element
+    if (!visualHitboxEl) {
+        visualHitboxEl = document.createElement('div');
+        visualHitboxEl.style.position = 'absolute';
+        visualHitboxEl.style.border = '2px solid red';
+        visualHitboxEl.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+        visualHitboxEl.style.borderRadius = '50%';
+        // Radius is 20px, so width/height are 40px
+        visualHitboxEl.style.width = '40px';
+        visualHitboxEl.style.height = '40px';
+        visualHitboxEl.style.pointerEvents = 'none'; // Don't block clicks
+        bgWorld.appendChild(visualHitboxEl);
+    }
+
 
     isPlaying = true;
     gameLoopId = requestAnimationFrame(runGameTick);
