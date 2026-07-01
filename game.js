@@ -339,7 +339,6 @@ function runGameTick() {
     if (camX > -minScrollLimitX) camX = -minScrollLimitX;
     if (camY > -minScrollLimitY) camY = -minScrollLimitY;
 
-    if (camX < -maxMapScrollX) cancelAnimationFrame(gameLoopId);
     if (camX < -maxMapScrollX) camX = -maxMapScrollX;
     if (camY < -maxMapScrollY) camY = -maxMapScrollY;
 
@@ -487,25 +486,35 @@ document.body.addEventListener('keyup', (e) => {
 // 6. DOM COMPONENT ASSETS & INTERFACES FULLSCREEN ENGINE
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    window.toggleFullscreen = function() {
-        const gameContainer = document.getElementById('gameViewport'); 
-        if (!gameContainer) return;
+    // 🌟 Grab your actual HTML button element (make sure the ID matches your HTML!)
+    const fullscreenBtn = document.getElementById('fullscreenBtn'); 
 
-        if (!document.fullscreenElement) {
-            const requestFS = gameContainer.requestFullscreen || gameContainer.webkitRequestFullscreen;
-            if (requestFS) {
-                requestFS.call(gameContainer).then(() => {
-                    setTimeout(updateViewportDimensions, 100);
-                });
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().then(() => {
-                    setTimeout(updateViewportDimensions, 100);
-                });
-            }
+    window.toggleFullscreen = function() {
+    const gameContainer = document.getElementById('gameViewport'); 
+    if (!gameContainer) return;
+
+    if (!document.fullscreenElement) {
+        const requestFS = gameContainer.requestFullscreen || gameContainer.webkitRequestFullscreen;
+        if (requestFS) {
+            requestFS.call(gameContainer).then(() => {
+                setTimeout(updateViewportDimensions, 100);
+            });
         }
-    };
+    } else {
+        // 🌟 UPDATED: Fallback for standard and webkit (Safari) exit methods
+        const exitFS = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exitFS) {
+            exitFS.call(document).then(() => {
+                setTimeout(updateViewportDimensions, 100);
+            });
+        }
+    }
+};
+
+    // 🌟 Automatically hook the function up to your button click
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', window.toggleFullscreen);
+    }
 
     document.addEventListener('fullscreenchange', () => {
         updateViewportDimensions();
