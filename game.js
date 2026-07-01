@@ -46,9 +46,9 @@ const FRAME_SIZE = 32;
 const keysPressed = { w: false, s: false, a: false, d: false };
 
 const mapBarriers = [
-    { x: 505, y: 864, width: 400, height: 20 },
-    { x: 663, y: 834, width: 200, height: 50 },
-    { x: 758, y: 805, width: 120, height: 80 },
+    { x: 495, y: 870, width: 400, height: 20 },
+    { x: 658, y: 837, width: 200, height: 50 },
+    { x: 752, y: 805, width: 120, height: 80 },
     { x: 257, y: 166, width: 27, height: 10 },
     { x: 320, y: 326, width: 27, height: 10 },
     { x: 161, y: 550, width: 27, height: 10 },
@@ -106,8 +106,8 @@ function spawnCoinOutsideView() {
         const isVisible = spawnX >= visibleMinX && spawnX <= visibleMaxX && spawnY >= visibleMinY && spawnY <= visibleMaxY;
         let isWalkable = true;
         for (let barrier of mapBarriers) {
-            if (spawnX < barrier.x + barrier.width + 20 && spawnX + coinSize > barrier.x - 20 &&
-                spawnY < barrier.y + barrier.height + 20 && spawnY + coinSize > barrier.y - 20) {
+            if (spawnX < barrier.x + barrier.width + 40 && spawnX + coinSize > barrier.x - 40 &&
+                spawnY < barrier.y + barrier.height + 40 && spawnY + coinSize > barrier.y - 40) {
                 isWalkable = false;
                 break;
             }
@@ -173,8 +173,8 @@ function spawnInitialCoins() {
             let isWalkable = true;
             // Check barriers
             for (let barrier of mapBarriers) {
-                if (spawnX < barrier.x + barrier.width + 20 && spawnX + 24 > barrier.x - 20 &&
-                    spawnY < barrier.y + barrier.height + 20 && spawnY + 24 > barrier.y - 20) {
+                if (spawnX < barrier.x + barrier.width + 40 && spawnX + 24 > barrier.x - 40 &&
+                    spawnY < barrier.y + barrier.height + 40 && spawnY + 24 > barrier.y - 40) {
                     isWalkable = false;
                     break;
                 }
@@ -233,7 +233,7 @@ function runGameTick() {
     const minFenceX = 140; 
     const maxFenceX = 880; 
     const minFenceY = 140; 
-    const maxFenceY = 860; 
+    const maxFenceY = 880; 
 
     if (keysPressed.a) nextWorldX -= moveSpeed;
     if (keysPressed.d) nextWorldX += moveSpeed;
