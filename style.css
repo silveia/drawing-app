@@ -20,7 +20,8 @@ body {
     width: 100vw; 
     height: 88vh; 
     max-width: 1200px; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    /* 🌟 FIX: Keep the workspace layer safely below the toolbar stack */
+    z-index: 1; 
 }
 
 canvas {
@@ -42,6 +43,8 @@ canvas {
     justify-content: space-between; 
     align-items: center;
     box-sizing: border-box;
+    position: relative;
+    z-index: 10; 
 }
 
 .toolbar-group {
