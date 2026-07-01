@@ -20,7 +20,6 @@ body {
     width: 100vw; 
     height: 88vh; 
     max-width: 1200px; 
-    /* 🌟 FIX: Keep the workspace layer safely below the toolbar stack */
     z-index: 1; 
 }
 
@@ -89,7 +88,6 @@ select {
     padding-right: 25px; 
 }
 
-/* --- Rounded Color Picker Asset --- */
 #colorPicker {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -157,10 +155,6 @@ select {
 
 #gameBtn:hover, #referenceBtn:hover { transform: scale(1.05); }
 #gameBtn:active, #referenceBtn:active { transform: scale(0.95); }
-
-/* Reference Header Upload Button */
-/* Reference Header Upload Button Base */
-/* Reference Header Upload Button */
 #uploadBtn {
     position: absolute;
     top: 10px;
@@ -171,8 +165,6 @@ select {
     cursor: pointer;
     background-color: #775F6C;
     border-radius: 0px; 
-
-    /* 🌟 THE REAL CENTERING FIX: Flex layout with explicit box sizing */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -186,8 +178,6 @@ select {
     height: 65%;
     object-fit: contain;  
     image-rendering: pixelated; 
-    
-    /* 🌟 THE REAL CENTERING FIX: Treat image as a block to remove inline font alignment gaps */
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -308,11 +298,11 @@ select {
    6. RPG GAME ENGINE VIEWPORT & HARDWARE CSS SCALE
    ========================================================================== */
 #gameViewport {
-    position: absolute;     /* 🌟 Change from relative to absolute pinning */
-    top: 32px;              /* 🌟 Adjust this number to match the exact height of your "game" header title bar */
+    position: absolute;
+    top: 32px;
     left: 0;
     right: 0;
-    bottom: 0;              /* 🌟 Clips perfectly to the bottom edge of your mini-window wrapper */
+    bottom: 0;
     overflow: hidden;
     background-color: #000;
     margin: 0;
@@ -321,7 +311,6 @@ select {
     display: block;
 }
 
-/* 🌟 Ensure fullscreen mode ignores the window wrapper bounds completely */
 #gameViewport:fullscreen {
     position: fixed !important;
     top: 0 !important;
@@ -385,17 +374,13 @@ select {
 
 #coinCounterDisplay {
     position: absolute;
-    /* 🌟 SHIFTED DOWN: Moved from 10px to 45px to clear your title header bar completely */
     top: 10px;
-    /* 🌟 SHIFTED INWARD: Moved to 15px so it doesn't hug the left edge asset line */
     left: 10px;
     background-color: #000;
     color: #fff;
-    font-size: 12px;                 /* Slightly smaller base text size to fit cleanly */
+    font-size: 12px;
     font-weight: bold;
     padding: 3px 7px;
-    
-    /* 🌟 HIGH VISIBILITY: Higher index and crisp scale ensures it stays crisp in windowed mode */
     z-index: 999999; 
     pointer-events: none; 
     display: flex;
@@ -417,7 +402,7 @@ select {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     pointer-events: none;      
-    transform: translate(-50%, -100%); /* Keeps trunk base centered on its target coordinate coordinate point */
+    transform: translate(-50%, -100%);
     transform-origin: bottom center; 
 }
 
@@ -449,20 +434,18 @@ select {
     display: none !important;
 }
 
-/* 🌟 FULLSCREEN DISPLAY SCALING: Automatically blows up the counter UI when in full monitor mode! */
 #gameViewport:fullscreen #coinCounterDisplay {
-    top: 30px;          /* Shoved down slightly further on big monitors */
-    left: 30px;         /* Shoved inward further for a clean gap */
-    font-size: 28px;    /* 🌟 Doubles the text size */
-    padding: 8px 16px;  /* Makes the backing box chunky */
+    top: 30px;
+    left: 30px;
+    font-size: 28px;
+    padding: 8px 16px;
     gap: 8px;
 }
 
 #gameViewport:fullscreen .coin-icon {
-    font-size: 32px;    /* 🌟 Doubles the coin emoji size */
+    font-size: 32px;
 }
 
-/* Webkit vendor prefix helper for browser compatibility (Safari/Chrome older engines) */
 #gameViewport:-webkit-full-screen #coinCounterDisplay {
     top: 30px;
     left: 30px;
@@ -474,12 +457,11 @@ select {
     font-size: 32px;
 }
 
-/* 🌟 FISH PARTICLE STYLE */
 .fish-particle {
     position: absolute;
-    width: 20px;   /* Size of the tiny fish */
+    width: 20px;
     height: 20px;
-    pointer-events: none; /* Make sure clicking through them still lets you play */
+    pointer-events: none;
     z-index: 9999999;
     animation: fishFountainAnim 0.8s ease-out forwards;
 }
@@ -490,7 +472,6 @@ select {
         opacity: 1;
     }
     100% {
-        /* This pushes the particles outward, drops them down like gravity, and fades them out */
         transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(var(--rot));
         opacity: 0;
     }
