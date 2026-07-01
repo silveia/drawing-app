@@ -11,7 +11,6 @@ const characters = [];
 let charImgUrl = '';
 let isCharImageLoaded = false;
 
-// 🌟 Individual size trackers for each tool
 let penSize = 5;
 let eraserSize = 20;
 const charLoader = document.getElementById('charLoader');
@@ -58,17 +57,35 @@ let isPanning = false;
 let startPanX = 0;
 let startPanY = 0;
 
-// ==========================================================================
-// 1. WINDOW DRAGGING ENGINE STATE
-// ==========================================================================
 let isDraggingWindow = false;
 let isDraggingWindow2 = false;
 let offsetX = 0;
 let offsetY = 0;
+const toggleFullscreenBtn = document.getElementById('toggleFullscreen');
+const gameViewport = document.getElementById('gameViewport');
 
-// ==========================================================================
-// 2. WINDOW OPEN / CLOSE & START CORE HANDLERS
-// ==========================================================================
+if (toggleFullscreenBtn && gameViewport) {
+    toggleFullscreenBtn.addEventListener('click', () => {
+        if (!startScreen.classList.contains('hidden-game-element')) {
+            return;
+        }
+
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (gameViewport.requestFullscreen) {
+                gameViewport.requestFullscreen();
+            } else if (gameViewport.webkitRequestFullscreen) {
+                gameViewport.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    });
+}
+
 startGameBtn.addEventListener('click', () => {
     startScreen.classList.add('hidden-game-element');     
     gameScreen.classList.remove('hidden-game-element');  
@@ -121,9 +138,6 @@ miniWindow2.addEventListener('mousedown', () => {
     miniWindow.style.zIndex = '99';
 });
 
-// ==========================================================================
-// 3. GLITCH-FREE WINDOW MOVEMENTS
-// ==========================================================================
 windowHeader.addEventListener('mousedown', (e) => {
     isDraggingWindow = true;
     offsetX = e.clientX - miniWindow.offsetLeft;
@@ -185,9 +199,6 @@ miniWindow2.addEventListener('mouseup', () => {
     localStorage.setItem('miniWindow2Height', `${rect.height}px`);
 });
 
-// ==========================================================================
-// 4. FILE & CANVAS IMAGE STORAGE AGENTS
-// ==========================================================================
 let stampImage = new Image();
 let isImageLoaded = false;
 stampImage.onload = () => { isImageLoaded = true; };
@@ -237,9 +248,6 @@ charLoader.addEventListener('change', (e) => {
     }
 });
 
-// ==========================================================================
-// 5. WINDOW LIFECYCLE & CANVAS SCALE INTERFACES
-// ==========================================================================
 function updateCSSView() {
     canvas.style.transform = `translate(${canvasOffsetX}px, ${canvasOffsetY}px) scale(${zoomLevel})`;
     canvas.style.transformOrigin = '0 0';
@@ -315,11 +323,6 @@ window.addEventListener('load', () => {
     }
 });
 
-// ==========================================================================
-// 6. DRAWING APPLICATION CONTROLS & ENGINE
-// ==========================================================================
-
-// 🌟 FIX: Instantly sync the slider size when manually changing options in the UI
 brushType.addEventListener('change', () => {
     currentTool = brushType.value;
     brushSize.value = currentTool === 'eraser' ? eraserSize : penSize;
@@ -429,7 +432,6 @@ function draw(e) {
     ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
     
-    // 🌟 FIX: Lock size rendering strictly to whichever independent setting variable matches your active tool!
     ctx.lineWidth = currentTool === 'eraser' ? eraserSize : penSize;
     
     ctx.lineCap = 'round';
@@ -593,9 +595,6 @@ function drawCustomShape(x, y) {
     ctx.restore();
 }
 
-// ==========================================================================
-// 7. ENVIRONMENT COMPONENT AGENTS (SHIMEJI) & FLOATING EASTER EGG TIMERS
-// ==========================================================================
 class Shimeji {
     constructor() {
         this.x = Math.random() * (window.innerWidth - 100);
@@ -712,9 +711,6 @@ spawnBtn.addEventListener('click', () => {
     characters.push(new Shimeji());
 });
 
-// ==========================================================================
-// MAIN RUNTIME TICK ENGINE
-// ==========================================================================
 function animationTick() {
     characters.forEach(char => char.update());
 
@@ -751,9 +747,6 @@ function animationTick() {
 }
 requestAnimationFrame(animationTick);
 
-// ==========================================================================
-// 8. BACKWARD / FORWARD HISTORICAL STATES (UNDO/REDO)
-// ==========================================================================
 function executeUndo() {
     if (undoStack.length === 0) return;
     const currentState = canvas.toDataURL();
@@ -824,10 +817,6 @@ container.addEventListener('wheel', (e) => {
     updateCSSView();
 }, { passive: false });
 
-// ==========================================================================
-// 🌟 NEW: SIZES INTERACTION EVENT AGENT
-// ==========================================================================
-// Captures and saves whatever value you choose inside your active canvas state
 brushSize.addEventListener('input', (e) => {
     const newSize = parseInt(e.target.value);
     if (currentTool === 'eraser') {
