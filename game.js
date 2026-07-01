@@ -1,19 +1,5 @@
-// ==========================================================================
-// 1. ENGINE CONFIGURATION & VARIABLES
-// ==========================================================================
 const bgWorld = document.getElementById('gameWorldBackground');
 const playerEl = document.getElementById('gamePlayer');
-
-
-
-
-let visualHitboxEl = null; // Add this with your other global variables
-
-
-
-
-
-
 let isPlaying = false;
 let gameLoopId = null;
 
@@ -23,7 +9,7 @@ let coinAnimTimer = 0;
 let playerCoins = 0;    
 
 let keyHistory = [];
-let lastHorizontalFacing = 'd'; // TRACKER: Keeps her facing the right way even after keys are released
+let lastHorizontalFacing = 'd';
 
 let worldPlayerX = 512;
 let worldPlayerY = 512;
@@ -84,7 +70,7 @@ function spawnCoinOutsideView() {
     if (coinPositions.length >= MAX_COINS) return;
     const mapSize = 1024;
     const coinSize = 24;
-    const MIN_COIN_DISTANCE = 60; // 🌟 Must match the initial spawn distance spacing
+    const MIN_COIN_DISTANCE = 60;
 
     const visibleMinX = worldPlayerX - (viewWidth / 2);
     const visibleMaxX = worldPlayerX + (viewWidth / 2);
@@ -113,8 +99,6 @@ function spawnCoinOutsideView() {
             }
         }
         if (isVisible || !isWalkable) continue;
-
-        // 🌟 ADDED: Check distance against existing coins for dynamic spawning
         let tooCloseToOtherCoin = false;
         for (let existingCoin of coinPositions) {
             const dx = spawnX - existingCoin.x;
@@ -157,7 +141,7 @@ function spawnTrees() {
 
 function spawnInitialCoins() {
     const mapSize = 1024;
-    const MIN_COIN_DISTANCE = 60; // 🌟 Adjust this number to change how spread out they are
+    const MIN_COIN_DISTANCE = 60;
 
     while (coinPositions.length < MAX_COINS) {
         let validLocation = false, spawnX = 0, spawnY = 0, attempts = 0;
@@ -171,7 +155,6 @@ function spawnInitialCoins() {
             if (spawnX < 140 || spawnX > 880 || spawnY < 140 || spawnY > 860) continue; 
 
             let isWalkable = true;
-            // Check barriers
             for (let barrier of mapBarriers) {
                 if (spawnX < barrier.x + barrier.width + 40 && spawnX + 24 > barrier.x - 40 &&
                     spawnY < barrier.y + barrier.height + 40 && spawnY + 24 > barrier.y - 40) {
@@ -180,8 +163,6 @@ function spawnInitialCoins() {
                 }
             }
             if (!isWalkable) continue;
-
-            // 🌟 ADDED: Check distance against all already spawned coins
             let tooCloseToOtherCoin = false;
             for (let existingCoin of coinPositions) {
                 const dx = spawnX - existingCoin.x;
@@ -220,9 +201,6 @@ function isCollidingWithBarriers(targetMapX, targetMapY) {
     return false;
 }
 
-// ==========================================================================
-// 2. MAIN ANIMATION TICK / GAME LOOP
-// ==========================================================================
 function runGameTick() {
     if (!isPlaying) return;
 
@@ -291,9 +269,6 @@ function runGameTick() {
         animFrame = 0; 
     }
 
-    // ==========================================================================
-    // 3. GLITCH-FREE UNIFORM TRANSFORMS
-    // ==========================================================================
     playerEl.style.backgroundPosition = `${-(animFrame * FRAME_SIZE)}px ${-(playerRow * FRAME_SIZE)}px`;
 
     let scaleFactor = 1;
@@ -377,12 +352,11 @@ function runGameTick() {
     const playerCenterX = playerEl.offsetLeft;
     const playerCenterY = playerEl.offsetTop; 
 
-    // Update and hide the visual debugging circle
     if (visualHitboxEl) {
         visualHitboxEl.style.left = `${playerCenterX - 20}px`;
         visualHitboxEl.style.top = `${playerCenterY - 20}px`;
         visualHitboxEl.style.zIndex = Math.floor(worldPlayerY + 17);
-        visualHitboxEl.style.display = 'none'; // 🌟 ADD THIS LINE TO MAKE IT INVISIBLE
+        visualHitboxEl.style.display = 'none';
     }
 
     coinPositions = coinPositions.filter(coin => {
@@ -408,9 +382,6 @@ function runGameTick() {
     gameLoopId = requestAnimationFrame(runGameTick);
 }
 
-// ==========================================================================
-// 4. CORE ENGINE LIFECYCLE CONTROLLER
-// ==========================================================================
 window.initCustomGame = function() {
     isPlaying = false; 
     if (gameLoopId) cancelAnimationFrame(gameLoopId);
@@ -436,18 +407,15 @@ window.initCustomGame = function() {
     coinPositions = []; 
     spawnInitialCoins(); 
 
-
-    // 🌟 ADD THIS: Create the visual hitbox element
     if (!visualHitboxEl) {
         visualHitboxEl = document.createElement('div');
         visualHitboxEl.style.position = 'absolute';
         visualHitboxEl.style.border = '2px solid red';
         visualHitboxEl.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
         visualHitboxEl.style.borderRadius = '50%';
-        // Radius is 20px, so width/height are 40px
         visualHitboxEl.style.width = '40px';
         visualHitboxEl.style.height = '40px';
-        visualHitboxEl.style.pointerEvents = 'none'; // Don't block clicks
+        visualHitboxEl.style.pointerEvents = 'none';
         bgWorld.appendChild(visualHitboxEl);
     }
 
@@ -463,9 +431,6 @@ window.teleportToSpawn = function() {
     animFrame = 0;
 };
 
-// ==========================================================================
-// 5. GLOBAL DOCUMENT INPUT LISTENERS
-// ==========================================================================
 document.body.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (key in keysPressed && !keysPressed[key]) {
@@ -482,11 +447,7 @@ document.body.addEventListener('keyup', (e) => {
     }
 });
 
-// ==========================================================================
-// 6. DOM COMPONENT ASSETS & INTERFACES FULLSCREEN ENGINE
-// ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 🌟 Grab your actual HTML button element (make sure the ID matches your HTML!)
     const fullscreenBtn = document.getElementById('fullscreenBtn'); 
 
     window.toggleFullscreen = function() {
@@ -501,7 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     } else {
-        // 🌟 UPDATED: Fallback for standard and webkit (Safari) exit methods
         const exitFS = document.exitFullscreen || document.webkitExitFullscreen;
         if (exitFS) {
             exitFS.call(document).then(() => {
@@ -510,8 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 };
-
-    // 🌟 Automatically hook the function up to your button click
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', window.toggleFullscreen);
     }
