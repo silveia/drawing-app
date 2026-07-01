@@ -10,6 +10,10 @@ const spawnBtn = document.getElementById('spawnBtn');
 const characters = []; 
 let charImgUrl = '';
 let isCharImageLoaded = false;
+
+// 🌟 Individual size trackers for each tool
+let penSize = 5;
+let eraserSize = 20;
 const charLoader = document.getElementById('charLoader');
 
 const miniWindow = document.getElementById('miniWindow');
@@ -31,7 +35,6 @@ let zoomLevel = 1;
 let canvasOffsetX = 0;
 let canvasOffsetY = 0;
 
-// 🌟 Increased zoom steps for a snappy keyboard experience
 const ZOOM_SPEED = 0.25; 
 const MAX_ZOOM = 5;
 const MIN_ZOOM = 0.2;
@@ -46,12 +49,10 @@ let undoStack = [];
 let redoStack = [];
 const MAX_STATES = 20; 
 
-// TRACKING VARIABLES FOR EASTER EGG FISH FOUNTAIN
 let isTKeyPressed = false;
 let htmlFishParticles = [];
 let spawnCooldown = 0; 
 
-// TABLET/MOUSE SPACEBAR PANNING VARIABLES
 let isSpacePressed = false;
 let isPanning = false;
 let startPanX = 0;
@@ -191,6 +192,10 @@ let stampImage = new Image();
 let isImageLoaded = false;
 stampImage.onload = () => { isImageLoaded = true; };
 
+const referenceImage = document.getElementById('referenceImage');
+const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+const windowImageLoader = document.getElementById('windowImageLoader');
+
 imageLoader.addEventListener('change', (e) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -203,6 +208,24 @@ imageLoader.addEventListener('change', (e) => {
     }
 });
 
+if (windowImageLoader) {
+    windowImageLoader.addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (referenceImage) {
+                referenceImage.src = event.target.result;
+                referenceImage.style.display = 'block'; 
+            }
+            if (uploadPlaceholder) {
+                uploadPlaceholder.style.display = 'none'; 
+            }
+        };
+        if (e.target.files[0]) {
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+}
+
 charLoader.addEventListener('change', (e) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -211,15 +234,6 @@ charLoader.addEventListener('change', (e) => {
     };
     if (e.target.files[0]) {
         reader.readAsDataURL(e.target.files[0]);
-    }
-});
-
-window.addEventListener('beforeunload', () => {
-    try {
-        const canvasDataUrl = canvas.toDataURL();
-        localStorage.setItem('mySavedArt', canvasDataUrl);
-    } catch (err) {
-        console.error("Failed to auto-save canvas on departure:", err);
     }
 });
 
@@ -282,15 +296,9 @@ window.addEventListener('load', () => {
         const img = new Image();
         img.onload = () => {
             const scale = window.devicePixelRatio || 1;
-            
-            // 1. Reset context to absolute pixels
             ctx.setTransform(1, 0, 0, 1, 0, 0); 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 2. Draw 1:1 to match the raw pixel snapshot dimensions
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-            
-            // 3. Now apply the DPI scaling for any future brush strokes
             ctx.scale(scale, scale);
         };
         img.src = savedDataUrl;
@@ -310,14 +318,17 @@ window.addEventListener('load', () => {
 // ==========================================================================
 // 6. DRAWING APPLICATION CONTROLS & ENGINE
 // ==========================================================================
+
+// 🌟 FIX: Instantly sync the slider size when manually changing options in the UI
 brushType.addEventListener('change', () => {
     currentTool = brushType.value;
+    brushSize.value = currentTool === 'eraser' ? eraserSize : penSize;
 });
 
 const resetTracking = () => {
     isDrawing = false;
     isPanning = false; 
-    canvas.style.cursor = isSpacePressed ? 'grab' : 'default';
+    canvas.style.cursor = isSpacePressed ? 'grab' : 'crosshair';
     livePoints = [];
     ctx.beginPath();
     ctx.globalCompositeOperation = 'source-over';
@@ -330,31 +341,51 @@ function getCanvasCoordinates(clientX, clientY) {
     return { x, y };
 }
 
-canvas.addEventListener('pointerdown', (e) => {
-    // Button 1 = Middle Click (standard tablet pan output)
-    // Button 2 = Right Click
-    const isTabletButton = e.button === 1 || e.button === 2;
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
 
-    if (isSpacePressed || isTabletButton) {
+canvas.addEventListener('pointerdown', (e) => {
+    const isTabletHardwarePan = e.button === 1 || e.buttons === 4;
+
+    if (isSpacePressed || isTabletHardwarePan) {
         e.preventDefault(); 
         isPanning = true;
         canvas.style.cursor = 'grabbing';
         
         startPanX = e.screenX - canvasOffsetX;
         startPanY = e.screenY - canvasOffsetY;
-        return;
-    }
-    if (isSpacePressed) {
-        isPanning = true;
-        canvas.style.cursor = 'grabbing';
-        // Lock the exact screen coordinates minus the current offset positions
-        startPanX = e.clientX - canvasOffsetX;
-        startPanY = e.clientY - canvasOffsetY;
         return; 
     }
 
-    isDrawing = true;
+    if (e.pointerType === 'pen') {
+        if (e.buttons === 32) {
+            currentTool = 'eraser';
+            canvas.style.cursor = 'cell'; 
+            ctx.lineWidth = eraserSize;
+            brushSize.value = eraserSize;
+        } else {
+            currentTool = 'round';
+            brushType.value = 'round';
+            canvas.style.cursor = 'crosshair';
+            ctx.lineWidth = penSize;
+            brushSize.value = penSize;
+        }
+    } else {
+        currentTool = brushType.value;
+        canvas.style.cursor = currentTool === 'eraser' ? 'cell' : 'crosshair';
+        
+        if (currentTool === 'eraser') {
+            ctx.lineWidth = eraserSize;
+            brushSize.value = eraserSize;
+        } else {
+            ctx.lineWidth = penSize;
+            brushSize.value = penSize;
+        }
+    }
 
+    isDrawing = true;
+    
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
     if (undoStack.length > MAX_STATES) undoStack.shift();
@@ -368,7 +399,7 @@ canvas.addEventListener('pointerdown', (e) => {
     ctx.beginPath();
     ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
-    ctx.lineWidth = brushSize.value;
+    
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
@@ -381,9 +412,9 @@ window.addEventListener('pointerup', resetTracking);
 
 function draw(e) {
     if (isPanning) {
-        canvasOffsetX = e.clientX - startPanX;
-        canvasOffsetY = e.clientY - startPanY;
-        
+        e.preventDefault();
+        canvasOffsetX += e.movementX;
+        canvasOffsetY += e.movementY;
         updateCSSView();
         return; 
     }
@@ -392,12 +423,15 @@ function draw(e) {
     mouseX = coords.x;
     mouseY = coords.y;
 
-    if (e.pointerType === 'pen' && e.buttons !== 1) return;
+    if (e.pointerType === 'pen' && e.buttons !== 1 && e.buttons !== 32) return;
     if (!isDrawing || isTKeyPressed) return;        
     
     ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
-    ctx.lineWidth = brushSize.value;
+    
+    // 🌟 FIX: Lock size rendering strictly to whichever independent setting variable matches your active tool!
+    ctx.lineWidth = currentTool === 'eraser' ? eraserSize : penSize;
+    
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -469,7 +503,6 @@ window.addEventListener('keydown', (e) => {
     }
 
     if (e.ctrlKey || e.metaKey) {
-        // 🌟 KEYBOARD SHORTCUT ZOOM: Zoom steps are now set to ZOOM_SPEED (0.25) around screen center coordinates
         if (e.key === '+' || e.key === '=') {
             e.preventDefault(); 
             const containerRect = container.getBoundingClientRect();
@@ -477,10 +510,8 @@ window.addEventListener('keydown', (e) => {
             const centerY = containerRect.height / 2;
             const mouseBeforeZoomX = (centerX - canvasOffsetX) / zoomLevel;
             const mouseBeforeZoomY = (centerY - canvasOffsetY) / zoomLevel;
-
             const oldZoom = zoomLevel;
             zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel + ZOOM_SPEED));
-
             canvasOffsetX -= mouseBeforeZoomX * (zoomLevel - oldZoom);
             canvasOffsetY -= mouseBeforeZoomY * (zoomLevel - oldZoom);
             updateCSSView();
@@ -492,10 +523,8 @@ window.addEventListener('keydown', (e) => {
             const centerY = containerRect.height / 2;
             const mouseBeforeZoomX = (centerX - canvasOffsetX) / zoomLevel;
             const mouseBeforeZoomY = (centerY - canvasOffsetY) / zoomLevel;
-
             const oldZoom = zoomLevel;
             zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel - ZOOM_SPEED));
-
             canvasOffsetX -= mouseBeforeZoomX * (zoomLevel - oldZoom);
             canvasOffsetY -= mouseBeforeZoomY * (zoomLevel - oldZoom);
             updateCSSView();
@@ -530,7 +559,7 @@ window.addEventListener('keyup', (e) => {
     if (e.key === ' ' || e.code === 'Space') {
         isSpacePressed = false;
         isPanning = false;
-        canvas.style.cursor = 'default';
+        canvas.style.cursor = 'crosshair';
     }
     if (e.key.toLowerCase() === 't') {
         isTKeyPressed = false;
@@ -735,7 +764,7 @@ function executeUndo() {
         const scale = window.devicePixelRatio || 1;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width / scale, canvas.height / scale);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         ctx.scale(scale, scale);
     };
     img.src = previousState;
@@ -750,7 +779,7 @@ function executeRedo() {
         const scale = window.devicePixelRatio || 1;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width / scale, canvas.height / scale);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         ctx.scale(scale, scale);
     };
     img.src = nextState;
@@ -758,6 +787,14 @@ function executeRedo() {
 
 container.addEventListener('wheel', (e) => {
     e.preventDefault(); 
+    const isTabletScroll = e.pointerType === 'pen' || (e.deltaX === 0 && Math.abs(e.deltaY) < 10 && !e.ctrlKey); 
+    
+    if (isTabletScroll) {
+        canvasOffsetX -= e.deltaX;
+        canvasOffsetY -= e.deltaY;
+        updateCSSView();
+        return;
+    }
 
     const rect = canvas.getBoundingClientRect();
     const mouseBeforeZoomX = (e.clientX - rect.left) / zoomLevel;
@@ -786,3 +823,16 @@ container.addEventListener('wheel', (e) => {
 
     updateCSSView();
 }, { passive: false });
+
+// ==========================================================================
+// 🌟 NEW: SIZES INTERACTION EVENT AGENT
+// ==========================================================================
+// Captures and saves whatever value you choose inside your active canvas state
+brushSize.addEventListener('input', (e) => {
+    const newSize = parseInt(e.target.value);
+    if (currentTool === 'eraser') {
+        eraserSize = newSize; 
+    } else {
+        penSize = newSize;    
+    }
+});
