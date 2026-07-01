@@ -159,28 +159,38 @@ select {
 #gameBtn:active, #referenceBtn:active { transform: scale(0.95); }
 
 /* Reference Header Upload Button */
+/* Reference Header Upload Button Base */
+/* Reference Header Upload Button */
 #uploadBtn {
     position: absolute;
     top: 10px;
     right: 10px;
     z-index: 10; 
-    width: 30px;          
-    height: 30px;         
+    width: 32px;          
+    height: 32px;         
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
     background-color: #775F6C;
-    outline: none;
     border-radius: 0px; 
+
+    /* 🌟 THE REAL CENTERING FIX: Flex layout with explicit box sizing */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 #uploadIcon {
-    width: 75%;       
-    height: 75%;
+    width: 65%;       
+    height: 65%;
     object-fit: contain;  
     image-rendering: pixelated; 
+    
+    /* 🌟 THE REAL CENTERING FIX: Treat image as a block to remove inline font alignment gaps */
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* ==========================================================================
