@@ -3,6 +3,17 @@
 // ==========================================================================
 const bgWorld = document.getElementById('gameWorldBackground');
 const playerEl = document.getElementById('gamePlayer');
+
+
+
+
+let visualHitboxEl = null; // Add this with your other global variables
+
+
+
+
+
+
 let isPlaying = false;
 let gameLoopId = null;
 
