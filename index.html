@@ -23,7 +23,7 @@
     
         <div class="toolbar-group">
             <label class="uploadBtn" for="imageLoader">upload stamp</label>
-            <input type="file" id="imageLoader" accept="image/*">
+            <input type="file" id="imageLoader" accept="image/*" style="display: none;">
     
             <label class="uploadBtn" for="charLoader">upload sprite</label>
             <input type="file" id="charLoader" accept="image/*" style="display: none;">
@@ -58,18 +58,16 @@
                 <button id="startGameBtn">start</button>
             </div>
             <div id="gameScreen" class="hidden-game-element">
-            <div id="gameViewport">
-                <div id="coinCounterDisplay">
+                <div id="gameViewport">
+                    <div id="coinCounterDisplay">
                         <span class="coin-icon">🪙</span> x <span id="coinScoreValue">0</span>
                     </div>
-                <div id="gameWorldBackground">
-                    <div id="gamePlayer"></div>
-                    
-
+                    <div id="gameWorldBackground">
+                        <div id="gamePlayer"></div>
                     </div>
-            </div>
-        </div> 
-    </div>
+                </div>
+            </div> 
+        </div> </div>
 
     <div id="miniWindow2" class="hidden-window">
         <div id="windowHeader2">
@@ -78,12 +76,12 @@
         </div>
         
         <div class="windowContent2">
-            <button id="uploadBtn" type="button" aria-label="Upload Reference Image">
+            <label for="windowImageLoader" id="uploadBtn" style="cursor: pointer; display: inline-block;">
                 <img src="upload.png" alt="Upload Icon" id="uploadIcon">
-            </button>
+            </label>
             <input type="file" id="windowImageLoader" accept="image/*" style="display: none;">
 
-            <img id="windowImagePreview" src="" alt="Preview">
+            <img id="referenceImage" src="" alt="Preview" style="display: none; max-width: 100%; height: auto;">
             <span id="uploadPlaceholder">upload file to view it here</span>
         </div>
     </div>
