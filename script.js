@@ -27,6 +27,15 @@ const startScreen = document.getElementById('startScreen');
 const gameScreen = document.getElementById('gameScreen');
 const startGameBtn = document.getElementById('startGameBtn');
 
+let zoomLevel = 1;
+let canvasOffsetX = 0;
+let canvasOffsetY = 0;
+
+// 🌟 Increased zoom steps for a snappy keyboard experience
+const ZOOM_SPEED = 0.25; 
+const MAX_ZOOM = 5;
+const MIN_ZOOM = 0.2;
+
 let isDrawing = false;
 let currentTool = 'round';
 let mouseX = 0;
@@ -37,10 +46,16 @@ let undoStack = [];
 let redoStack = [];
 const MAX_STATES = 20; 
 
-// 🌟 TRACKING VARIABLES FOR EASTER EGG FISH FOUNTAIN
+// TRACKING VARIABLES FOR EASTER EGG FISH FOUNTAIN
 let isTKeyPressed = false;
 let htmlFishParticles = [];
-let spawnCooldown = 0; // 🌟 NEW: Controls how rapidly the fish sprout
+let spawnCooldown = 0; 
+
+// TABLET/MOUSE SPACEBAR PANNING VARIABLES
+let isSpacePressed = false;
+let isPanning = false;
+let startPanX = 0;
+let startPanY = 0;
 
 // ==========================================================================
 // 1. WINDOW DRAGGING ENGINE STATE
@@ -203,54 +218,40 @@ window.addEventListener('beforeunload', () => {
     try {
         const canvasDataUrl = canvas.toDataURL();
         localStorage.setItem('mySavedArt', canvasDataUrl);
-        
-        if (typeof window.getCustomGameProgress === 'function') {
-            const progress = window.getCustomGameProgress(); 
-            localStorage.setItem('myGameProgressData', JSON.stringify(progress));
-        }
     } catch (err) {
-        console.error("Failed to auto-save canvas or game state on departure:", err);
+        console.error("Failed to auto-save canvas on departure:", err);
     }
 });
 
 // ==========================================================================
 // 5. WINDOW LIFECYCLE & CANVAS SCALE INTERFACES
 // ==========================================================================
-function resizeCanvas() {
-    const scale = window.devicePixelRatio || 1; 
-    const targetWidth = container ? container.clientWidth : (canvas.clientWidth || 800);
-    const targetHeight = container ? container.clientHeight : (canvas.clientHeight || 600);
-    
-    const newWidth = targetWidth * scale;
-    const newHeight = targetHeight * scale;
-    
-    if (canvas.width !== newWidth || canvas.height !== newHeight) {
-        let temporarySave = null;
-        if (canvas.width > 0 && canvas.height > 0) {
-            temporarySave = canvas.toDataURL();
-        }
+function updateCSSView() {
+    canvas.style.transform = `translate(${canvasOffsetX}px, ${canvasOffsetY}px) scale(${zoomLevel})`;
+    canvas.style.transformOrigin = '0 0';
+}
 
-        canvas.width = newWidth;
-        canvas.height = newHeight;
+function resizeCanvas() {
+    if (!canvas.dataset.initialized) {
+        const scale = window.devicePixelRatio || 1; 
+        const targetWidth = container ? container.clientWidth : 800;
+        const targetHeight = container ? container.clientHeight : 600;
+        
+        canvas.width = targetWidth * scale;
+        canvas.height = targetHeight * scale;
+        canvas.style.width = `${targetWidth}px`;
+        canvas.style.height = `${targetHeight}px`;
 
         ctx.setTransform(1, 0, 0, 1, 0, 0); 
         ctx.scale(scale, scale);
+        
         ctx.imageSmoothingEnabled = true;
-
-        if (temporarySave) {
-            const restoreImg = new Image();
-            restoreImg.onload = () => {
-                ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.drawImage(restoreImg, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-            };
-            restoreImg.src = temporarySave;
-        }
+        ctx.imageSmoothingQuality = 'high';
+        canvas.dataset.initialized = "true";
+        
+        updateCSSView();
     }
 }
-
-window.addEventListener('resize', resizeCanvas);
 
 window.addEventListener('load', () => {
     resizeCanvas(); 
@@ -280,10 +281,16 @@ window.addEventListener('load', () => {
     if (savedDataUrl) {
         const img = new Image();
         img.onload = () => {
+            const scale = window.devicePixelRatio || 1;
+            
+            // 1. Reset context to absolute pixels
             ctx.setTransform(1, 0, 0, 1, 0, 0); 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 2. Draw 1:1 to match the raw pixel snapshot dimensions
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-            const scale = window.devicePixelRatio || 1;
+            
+            // 3. Now apply the DPI scaling for any future brush strokes
             ctx.scale(scale, scale);
         };
         img.src = savedDataUrl;
@@ -298,11 +305,6 @@ window.addEventListener('load', () => {
         miniWindow.classList.remove('hidden-window'); 
         miniWindow.style.display = 'block'; 
     }
-
-    const gameContainer = document.getElementById('gameViewport');
-    if (gameContainer) {
-        gameContainer.classList.remove('fullscreen-mode');
-    }
 });
 
 // ==========================================================================
@@ -314,109 +316,92 @@ brushType.addEventListener('change', () => {
 
 const resetTracking = () => {
     isDrawing = false;
+    isPanning = false; 
+    canvas.style.cursor = isSpacePressed ? 'grab' : 'default';
     livePoints = [];
     ctx.beginPath();
     ctx.globalCompositeOperation = 'source-over';
 };
 
-canvas.addEventListener('mousedown', (e) => {
-    if (isTKeyPressed) return;
+function getCanvasCoordinates(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) / (rect.width / canvas.clientWidth);
+    const y = (clientY - rect.top) / (rect.height / canvas.clientHeight);
+    return { x, y };
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+    // Button 1 = Middle Click (standard tablet pan output)
+    // Button 2 = Right Click
+    const isTabletButton = e.button === 1 || e.button === 2;
+
+    if (isSpacePressed || isTabletButton) {
+        e.preventDefault(); 
+        isPanning = true;
+        canvas.style.cursor = 'grabbing';
+        
+        startPanX = e.screenX - canvasOffsetX;
+        startPanY = e.screenY - canvasOffsetY;
+        return;
+    }
+    if (isSpacePressed) {
+        isPanning = true;
+        canvas.style.cursor = 'grabbing';
+        // Lock the exact screen coordinates minus the current offset positions
+        startPanX = e.clientX - canvasOffsetX;
+        startPanY = e.clientY - canvasOffsetY;
+        return; 
+    }
+
+    isDrawing = true;
 
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
     if (undoStack.length > MAX_STATES) undoStack.shift();
     redoStack = []; 
 
-    isDrawing = true;
-    livePoints = [];
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    mouseX = coords.x;
+    mouseY = coords.y;
+    livePoints = [{ x: mouseX, y: mouseY }];
     
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    livePoints.push({ x: x, y: y });
-
     ctx.beginPath();
-    if (currentTool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
-    } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = colorPicker.value;
-        ctx.fillStyle = colorPicker.value;
-    }
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
     ctx.lineWidth = brushSize.value;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-
-    ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
-    ctx.fill();
+    
+    ctx.moveTo(mouseX, mouseY);
+    ctx.lineTo(mouseX, mouseY); 
+    ctx.stroke();
 });
 
-window.addEventListener('mouseup', resetTracking);
-
-// 🌟 UPDATED: Spawns EVEN LARGER fish elements (80px width)
-function spawnFloatingFish() {
-    const rect = canvas.getBoundingClientRect();
-    
-    const spawnX = rect.left + mouseX;
-    const spawnY = rect.top + mouseY;
-
-    const fish = document.createElement('img');
-    fish.src = 'fish.png'; 
-    
-    fish.style.position = 'fixed';
-    fish.style.left = `${spawnX}px`;
-    fish.style.top = `${spawnY}px`;
-    fish.style.width = '80px'; // 🌟 UPDATED: Changed from 48px to 80px to make them much bigger!
-    fish.style.height = 'auto';
-    fish.style.pointerEvents = 'none';
-    fish.style.zIndex = '9999999';
-    
-    // Updated centering offsets matching the new 80px width
-    fish.style.marginTop = '-40px';
-    fish.style.marginLeft = '-40px';
-    
-    document.body.appendChild(fish);
-
-    const angle = (Math.random() * Math.PI) + Math.PI; 
-    const speed = (Math.random() * 5) + 3;
-
-    htmlFishParticles.push({
-        element: fish,
-        x: spawnX,
-        y: spawnY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        rotation: Math.random() * 360,
-        rotSpeed: (Math.random() * 8) - 4
-    });
-}
+window.addEventListener('pointerup', resetTracking);
 
 function draw(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    mouseX = x;
-    mouseY = y;
-
-    if (!isDrawing || isTKeyPressed) return;        
-    
-    if (currentTool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)'; 
-    } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = colorPicker.value;
+    if (isPanning) {
+        canvasOffsetX = e.clientX - startPanX;
+        canvasOffsetY = e.clientY - startPanY;
+        
+        updateCSSView();
+        return; 
     }
 
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    mouseX = coords.x;
+    mouseY = coords.y;
+
+    if (e.pointerType === 'pen' && e.buttons !== 1) return;
+    if (!isDrawing || isTKeyPressed) return;        
+    
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(0,0,0,1)' : colorPicker.value;
     ctx.lineWidth = brushSize.value;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    livePoints.push({ x: x, y: y });
+    livePoints.push({ x: mouseX, y: mouseY });
 
     if (livePoints.length > 1) {
         ctx.beginPath();
@@ -440,31 +425,113 @@ function draw(e) {
     }
 }
 
-window.addEventListener('mousemove', draw);
+window.addEventListener('pointermove', draw);
+
+function spawnFloatingFish() {
+    const rect = canvas.getBoundingClientRect();
+    const fish = document.createElement('img');
+    fish.src = 'fish.png'; 
+    
+    fish.style.position = 'fixed';
+    fish.style.left = `${mouseX * (rect.width / canvas.clientWidth) + rect.left}px`;
+    fish.style.top = `${mouseY * (rect.height / canvas.clientHeight) + rect.top}px`;
+    fish.style.width = '120px'; 
+    fish.style.height = 'auto';
+    fish.style.imageRendering = 'pixelated';
+    fish.style.pointerEvents = 'none';
+    fish.style.zIndex = '9999999';
+    fish.style.marginTop = '-60px';  
+    fish.style.marginLeft = '-60px'; 
+    
+    document.body.appendChild(fish);
+
+    const angle = (Math.random() * Math.PI) + Math.PI; 
+    const speed = (Math.random() * 5) + 3;
+
+    htmlFishParticles.push({
+        element: fish,
+        x: parseFloat(fish.style.left),
+        y: parseFloat(fish.style.top),
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() * 8) - 4
+    });
+}
 
 window.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.code === 'Space') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            isSpacePressed = true;
+            if (!isPanning) canvas.style.cursor = 'grab';
+        }
+    }
+
+    if (e.ctrlKey || e.metaKey) {
+        // 🌟 KEYBOARD SHORTCUT ZOOM: Zoom steps are now set to ZOOM_SPEED (0.25) around screen center coordinates
+        if (e.key === '+' || e.key === '=') {
+            e.preventDefault(); 
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const mouseBeforeZoomX = (centerX - canvasOffsetX) / zoomLevel;
+            const mouseBeforeZoomY = (centerY - canvasOffsetY) / zoomLevel;
+
+            const oldZoom = zoomLevel;
+            zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel + ZOOM_SPEED));
+
+            canvasOffsetX -= mouseBeforeZoomX * (zoomLevel - oldZoom);
+            canvasOffsetY -= mouseBeforeZoomY * (zoomLevel - oldZoom);
+            updateCSSView();
+        }
+        if (e.key === '-') {
+            e.preventDefault(); 
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const mouseBeforeZoomX = (centerX - canvasOffsetX) / zoomLevel;
+            const mouseBeforeZoomY = (centerY - canvasOffsetY) / zoomLevel;
+
+            const oldZoom = zoomLevel;
+            zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel - ZOOM_SPEED));
+
+            canvasOffsetX -= mouseBeforeZoomX * (zoomLevel - oldZoom);
+            canvasOffsetY -= mouseBeforeZoomY * (zoomLevel - oldZoom);
+            updateCSSView();
+        }
+        if (e.key === '0') {
+            e.preventDefault(); 
+            zoomLevel = 1; 
+            canvasOffsetX = 0; 
+            canvasOffsetY = 0;
+            updateCSSView();
+        }
+        if (e.key.toLowerCase() === 'z') {
+            e.preventDefault(); 
+            executeUndo();
+        }
+        if (e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            executeRedo();
+        }
+    }
+
     if (e.key.toLowerCase() === 't') {
         isTKeyPressed = true;
     }
 
     if (e.key === 'Shift') {
-        if (mouseX >= 0 && mouseX <= canvas.clientWidth && mouseY >= 0 && mouseY <= canvas.clientHeight) {
-            drawCustomShape(mouseX, mouseY);
-        }
-    }
-    
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault(); 
-        executeUndo();
-    }
-    
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        executeRedo();
+        drawCustomShape(mouseX, mouseY);
     }
 });
 
 window.addEventListener('keyup', (e) => {
+    if (e.key === ' ' || e.code === 'Space') {
+        isSpacePressed = false;
+        isPanning = false;
+        canvas.style.cursor = 'default';
+    }
     if (e.key.toLowerCase() === 't') {
         isTKeyPressed = false;
     }
@@ -479,9 +546,7 @@ function drawCustomShape(x, y) {
     redoStack = [];
 
     ctx.save();
-    
     const baseSize = Number(brushSize.value) * 2.5; 
-
     const aspect = stampImage.width / stampImage.height;
     let targetWidth = baseSize;
     let targetHeight = baseSize;
@@ -497,9 +562,6 @@ function drawCustomShape(x, y) {
     
     ctx.drawImage(stampImage, targetX, targetY, targetWidth, targetHeight);
     ctx.restore();
-    
-    const stampSnapshot = canvas.toDataURL();
-    localStorage.setItem('mySavedArt', stampSnapshot);
 }
 
 // ==========================================================================
@@ -608,7 +670,6 @@ class Shimeji {
 clearBtn.addEventListener('click', () => {
     const preSnapshot = canvas.toDataURL();
     undoStack.push(preSnapshot);
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     characters.forEach(char => char.element.remove());
     characters.length = 0;
@@ -628,10 +689,9 @@ spawnBtn.addEventListener('click', () => {
 function animationTick() {
     characters.forEach(char => char.update());
 
-    // 🌟 UPDATED: Slowed down spawning rate using a frame counter cooldown
     if (isTKeyPressed) {
         spawnCooldown++;
-        if (spawnCooldown % 5 === 0) { // Spawns 1 fish every 5 loop ticks instead of every frame
+        if (spawnCooldown % 5 === 0) { 
             spawnFloatingFish();
         }
     } else {
@@ -639,7 +699,6 @@ function animationTick() {
     }
 
     if (htmlFishParticles.length > 0) {
-        // Loop backwards through the array to prevent glitchy jumps when slicing elements out
         for (let i = htmlFishParticles.length - 1; i >= 0; i--) {
             const p = htmlFishParticles[i];
             
@@ -651,9 +710,7 @@ function animationTick() {
             p.element.style.left = `${p.x}px`;
             p.element.style.top = `${p.y}px`;
             p.element.style.transform = `rotate(${p.rotation}deg)`;
-            // 🌟 UPDATED: p.alpha transparency drop code completely removed so they never fade!
 
-            // 🌟 UPDATED: Removes fish from memory only when they fall completely past the viewport floor layout line
             if (p.y > window.innerHeight + 100) {
                 p.element.remove();
                 htmlFishParticles.splice(i, 1);
@@ -675,10 +732,10 @@ function executeUndo() {
     const previousState = undoStack.pop();
     const img = new Image();
     img.onload = () => {
+        const scale = window.devicePixelRatio || 1;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const scale = window.devicePixelRatio || 1;
+        ctx.drawImage(img, 0, 0, canvas.width / scale, canvas.height / scale);
         ctx.scale(scale, scale);
     };
     img.src = previousState;
@@ -690,25 +747,42 @@ function executeRedo() {
     undoStack.push(canvas.toDataURL());
     const img = new Image();
     img.onload = () => {
+        const scale = window.devicePixelRatio || 1;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const scale = window.devicePixelRatio || 1;
+        ctx.drawImage(img, 0, 0, canvas.width / scale, canvas.height / scale);
         ctx.scale(scale, scale);
     };
     img.src = nextState;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const fsBtn = document.getElementById('toggleFullscreen');
-    if (fsBtn) {
-        fsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof window.toggleFullscreen === 'function') {
-                window.toggleFullscreen();
-            } else {
-                console.error("The toggleFullscreen function is not defined in game.js yet!");
-            }
-        });
+container.addEventListener('wheel', (e) => {
+    e.preventDefault(); 
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseBeforeZoomX = (e.clientX - rect.left) / zoomLevel;
+    const mouseBeforeZoomY = (e.clientY - rect.top) / zoomLevel;
+
+    if (e.ctrlKey) {
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 40; 
+        
+        const oldZoom = zoomLevel;
+        zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel - delta * 0.008));
+
+        canvasOffsetX -= mouseBeforeZoomX * (zoomLevel - oldZoom);
+        canvasOffsetY -= mouseBeforeZoomY * (zoomLevel - oldZoom);
+    } 
+    else {
+        let moveX = e.deltaX;
+        let moveY = e.deltaY;
+        if (e.deltaMode === 1) {
+            moveX *= 40;
+            moveY *= 40;
+        }
+        canvasOffsetX -= moveX;
+        canvasOffsetY -= moveY;
     }
-});
+
+    updateCSSView();
+}, { passive: false });
